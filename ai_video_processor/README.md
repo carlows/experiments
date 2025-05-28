@@ -6,13 +6,13 @@ An intelligent video processing tool that uses Gemini 2.0 Flash to analyze skati
 
 1. **Analyzes video content** - Extracts frames from video and uses AI to identify when the person is visible in the video
 2. **Creates individual clips** - Generates separate video clips for each segment where the person appears (minimum 5 seconds)
-3. **Combines clips** - Creates a final video with smooth fade transitions between all relevant segments
+3. **Combines clips** - Creates a final video by concatenating all relevant segments without transitions
 4. **Caches results** - Stores AI analysis to avoid re-processing and save tokens
 
 ## Output
 
 - `clips/` - Individual video segments
-- `output/` - Combined video with transitions
+- `output/` - Combined video (simple concatenation)
 - `video_frames/` - Grid images used for analysis
 - `analysis_cache/` - Cached AI responses
 
