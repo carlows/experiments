@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Websocket Client</title>
+</head>
+<body>
+  <button id="sendHelloBtn">Send Ping!</button>
+  <button id="disconnectBtn">Disconnect</button>
+  <button id="sendRegularHttpMessageBtn">Send Regular HTTP Message</button>
+  
+  <script>
+    var exampleSocket = new WebSocket("ws://localhost:2345");
+    var sendHelloBtn = document.getElementById('sendHelloBtn');
+    var disconnectBtn = document.getElementById('disconnectBtn');
+    exampleSocket.onopen = function (event) {
+      console.log("WebSocket connection opened!");
+      console.log("Sending message: 'Can you hear me?'");
+      exampleSocket.send("Can you hear me?");
+      console.log("Message sent successfully");
+    };
+    
+    exampleSocket.onmessage = function (event) {
+      console.log("Received message:", event.data);
+    };
+    
+    exampleSocket.onerror = function (error) {
+      console.error("WebSocket error:", error);
+    };
+    
+    exampleSocket.onclose = function (event) {
+      console.log("WebSocket connection closed. Code:", event.code, "Reason:", event.reason);
+    };
+    
+    sendHelloBtn.addEventListener('click', function() {
+      exampleSocket.send("Ping!");
+      console.log("Ping! message sent!");
+    });
+
+    disconnectBtn.addEventListener('click', function() {
+      exampleSocket.close();
+      console.log("WebSocket connection closed!");
+    });
+
+    sendRegularHttpMessageBtn.addEventListener('click', function() {
+      fetch('http://localhost:2345', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: "YOU'RE A BAD BAD BOY"
+      });
+    });
+  </script>
+</body>
+</html>
