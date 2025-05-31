@@ -1,0 +1,17 @@
+PATH
+  remote: gem/ruby_c_extension
+  specs:
+    ruby_c_extension (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  arm64-darwin-23
+
+DEPENDENCIES
+  ruby_c_extension!
+
+BUNDLED WITH
+   2.4.22

@@ -1,0 +1,22 @@
+PATH
+  remote: .
+  specs:
+    ruby_c_extension (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.2.1)
+    rake-compiler (1.3.0)
+      rake
+
+PLATFORMS
+  arm64-darwin-23
+
+DEPENDENCIES
+  rake (~> 13.0)
+  rake-compiler
+  ruby_c_extension!
+
+BUNDLED WITH
+   2.4.22

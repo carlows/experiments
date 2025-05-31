@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+require "bundler/gem_tasks"
+require "rubygems/package_task"
+require "rake/testtask"
+require "rake/extensiontask"
+
+ruby_c_extension_spec = Bundler.load_gemspec("ruby_c_extension.gemspec")
+Gem::PackageTask.new(ruby_c_extension_spec).define
+
+Rake::ExtensionTask.new("fibonacci") do |ext|
+  ext.lib_dir = "lib/ruby_c_extension"
+  ext.ext_dir = "ext/ruby_c_extension"
+end
+
+task default: [:clobber, :compile]
+
+CLEAN.add("{ext,lib}/**/*.{o,so}", "pkg")
