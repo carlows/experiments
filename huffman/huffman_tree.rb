@@ -16,9 +16,9 @@ class HuffmanTree
   def <=>(other)
     weight_comparison = root.weight <=> other.root.weight
     return weight_comparison unless weight_comparison == 0
-    
+
     # If weights are equal, use object_id to maintain uniqueness
-    object_id <=> other.object_id
+    root.object_id <=> other.root.object_id
   end
 
   def self.build_tree(frequencies)
