@@ -41,7 +41,7 @@ describe "Huffman" do
       Huffman.new.encode("#{root_dir}/test_short.txt", output_file)
       table = Huffman.new.decode(output_file, "#{root_dir}/test_short_decoded.txt")
 
-      expect(table).to eq({ " " => "0", "h" => "11", "i" => "10" })
+      expect(File.read("#{root_dir}/test_short_decoded.txt")).to eq("hi ")
     end
   end
 end

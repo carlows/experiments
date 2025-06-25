@@ -1,0 +1,87 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../huffman'
+
+def show_usage
+  puts <<~USAGE
+    Huffman Compression Tool
+    
+    Usage:
+      huffman encode <input_file> <output_file> [--debug]
+      huffman decode <input_file> <output_file> [--debug]
+      huffman --help
+    
+    Examples:
+      huffman encode input.txt compressed.bin
+      huffman decode compressed.bin output.txt
+      huffman encode large.txt compressed.bin --debug
+  USAGE
+end
+
+def main
+  if ARGV.empty? || ARGV.include?('--help') || ARGV.include?('-h')
+    show_usage
+    exit 0
+  end
+
+  command = ARGV[0]
+  debug = ARGV.include?('--debug')
+  
+  case command
+  when 'encode'
+    if ARGV.length < 3
+      puts "Error: encode command requires input and output files"
+      show_usage
+      exit 1
+    end
+    
+    input_file = ARGV[1]
+    output_file = ARGV[2]
+    
+    unless File.exist?(input_file)
+      puts "Error: Input file '#{input_file}' not found"
+      exit 1
+    end
+    
+    begin
+      puts "Encoding '#{input_file}' to '#{output_file}'..."
+      Huffman.new(debug).encode(input_file, output_file)
+      puts "Encoding completed successfully!"
+    rescue => e
+      puts "Error during encoding: #{e.message}"
+      exit 1
+    end
+    
+  when 'decode'
+    if ARGV.length < 3
+      puts "Error: decode command requires input and output files"
+      show_usage
+      exit 1
+    end
+    
+    input_file = ARGV[1]
+    output_file = ARGV[2]
+    
+    unless File.exist?(input_file)
+      puts "Error: Input file '#{input_file}' not found"
+      exit 1
+    end
+    
+    begin
+      puts "Decoding '#{input_file}' to '#{output_file}'..."
+      Huffman.new(debug).decode(input_file, output_file)
+      puts "Decoding completed successfully!"
+    rescue => e
+      puts "Error during decoding: #{e.message}"
+      exit 1
+    end
+    
+  else
+    puts "Error: Unknown command '#{command}'"
+    show_usage
+    exit 1
+  end
+end
+
+main if __FILE__ == $0 
