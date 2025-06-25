@@ -32,4 +32,16 @@ describe "Huffman" do
       end
     end
   end
+
+  context 'decode' do
+    it 'decodes the encoded file' do
+      root_dir = File.expand_path("..", __dir__)
+      FileUtils.rm_f("#{root_dir}/output")
+      output_file = "#{root_dir}/output"
+      Huffman.new.encode("#{root_dir}/test_short.txt", output_file)
+      table = Huffman.new.decode(output_file, "#{root_dir}/test_short_decoded.txt")
+
+      expect(table).to eq({ " " => "0", "h" => "11", "i" => "10" })
+    end
+  end
 end
