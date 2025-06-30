@@ -11,10 +11,10 @@ RSpec.describe PrefixCodes do
       table = prefix_codes.generate_table
       expect(table).to eq({
         'C' => '1110',
-        'D' => '110',
+        'D' => '101',
         'E' => '0',
         'K' => '111101',
-        'L' => '101',
+        'L' => '110',
         'M' => '11111',
         'U' => '100',
         'Z' => '111100'

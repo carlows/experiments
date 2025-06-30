@@ -4,7 +4,4 @@ source "https://rubygems.org"
 
 # gem "rails"
 gem "rspec"
-gem 'sorted_set'
 gem 'byebug'
-gem 'thor'
-gem 'ruby-progressbar'

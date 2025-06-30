@@ -3,7 +3,6 @@ GEM
   specs:
     byebug (12.0.0)
     diff-lcs (1.6.2)
-    rbtree (0.4.6)
     rspec (3.13.1)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -17,10 +16,6 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.4)
-    set (1.1.2)
-    sorted_set (1.0.3)
-      rbtree
-      set (~> 1.0)
 
 PLATFORMS
   arm64-darwin-23
@@ -28,7 +23,6 @@ PLATFORMS
 DEPENDENCIES
   byebug
   rspec
-  sorted_set
 
 BUNDLED WITH
    2.4.22

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'sorted_set'
+require_relative 'priority_queue'
 
 class HuffmanTree
   attr_reader :root
@@ -14,26 +14,21 @@ class HuffmanTree
   end
 
   def <=>(other)
-    weight_comparison = root.weight <=> other.root.weight
-    return weight_comparison unless weight_comparison == 0
-
-    # If weights are equal, use object_id to maintain uniqueness
-    root.object_id <=> other.root.object_id
+    root.weight <=> other.root.weight
   end
 
   def self.build_tree(frequencies)
     trees = frequencies.map { |element, frequency| HuffmanTree.new(weight: frequency, element:) }
-    sorted_set = SortedSet.new(trees)
+    priority_queue = PriorityQueue.new
+    trees.each { |tree| priority_queue.insert(tree) }
     tree = nil
-    
-    while sorted_set.size > 1
-      left = sorted_set.first
-      sorted_set.delete(left)
-      right = sorted_set.first
-      sorted_set.delete(right)
+
+    while priority_queue.size > 1
+      left = priority_queue.extract_min
+      right = priority_queue.extract_min
       
       tree = HuffmanTree.new(weight: left.weight + right.weight, left: left.root, right: right.root)
-      sorted_set.add(tree)
+      priority_queue.insert(tree)
     end
 
     tree
