@@ -32,3 +32,4 @@ Test.singleton_class.hello_two #> should work!
 puts Test.singleton_class == (class << Test; self end) 
 # Literally took me hours to understand why this was used here: https://github.com/rails/rails/blob/main/activesupport/lib/active_support/current_attributes.rb#L121
 # I mean, I still don't know what it's being used for, but I'll get to that in the future :D
+# This post is amazing at explaining all of this: https://yehudakatz.com/2009/11/15/metaprogramming-in-ruby-its-all-about-the-self/
