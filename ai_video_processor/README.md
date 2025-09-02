@@ -2,6 +2,8 @@
 
 An intelligent video processing tool that uses Gemini 2.0 Flash to analyze skating videos and automatically extract relevant segments.
 
+This project was 100% vibe coded, as I wanted to test out the capabilities of cursor for the first time:)
+
 ## What it does
 
 1. **Analyzes video content** - Extracts frames from video and uses AI to identify when the person is visible in the video
