@@ -1,3 +1,17 @@
+# I considered two approaches to this problem:
+# 1. Building the final map in one step by using a two-pointer approach
+#    and then calculating the checksum from the map.
+#    I didn't go with this approach because I wasn't sure about which edge cases
+#    I might have encountered while building the map after the iterations.
+# 2. Building the initial map and using a two-pointer approach to make the replacements.
+#    This approach was more straightfoward and allowed me to spot some of the edge cases.
+#    This was the easier to implement.
+#
+# Notes:
+# 1. I completely ignored that the IDs could be double-digit numbers. Thus I got stuck for a while.
+#    I need to be more careful about considering what the possible values the problem might have.
+# 2. It's pretty hard to spot the edge cases on the real input, pretty often the samples I attempt work,
+#    but then the real input doesn't.
 def checksum(input)
   items = input.strip.chars.map { |c| c.to_i }
   uncompressed = []
@@ -60,7 +74,7 @@ assert("calculates the result for the sample input in page", checksum("233313312
 
 assert("sample input", checksum("748770289980535691"), 8046)
 
-assert("sample input", checksum("111111111111111111111111"), 381)
+assert("double digit IDs", checksum("111111111111111111111111"), 381)
 
 file = File.readlines('./input09.txt')[0]
 assert("calculates the real result", checksum(file), 6385338159127)
