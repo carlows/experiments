@@ -26,28 +26,22 @@ class TimeTraveler
   end
 
   def calculate_spread_by_std_dev(guards)
-    # Extract x and y coordinates
     x_coords = guards.map { |pos| pos.px }
     y_coords = guards.map { |pos| pos.py }
 
-    # Calculate standard deviation for x and y coordinates
     x_std_dev = standard_deviation(x_coords)
     y_std_dev = standard_deviation(y_coords)
 
-    # Combine standard deviations
     Math.sqrt(x_std_dev**2 + y_std_dev**2)
   end
 
   def standard_deviation(values)
     return 0.0 if values.length < 2
 
-    # Calculate mean
     mean = values.sum.to_f / values.length
 
-    # Calculate variance (average of squared differences from mean)
     variance = values.map { |x| (x - mean)**2 }.sum / values.length
 
-    # Standard deviation is square root of variance
     Math.sqrt(variance)
   end
 
