@@ -70,13 +70,8 @@ def move_horizontally(cell, dir, grid)
   result = false
 
   # when moving left or right we simply move all boxes across a line
-  if (robot?(grid, cell) || box?(grid, cell))
-    result = move_horizontally([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
-    move_cell(cell, dir, grid) if result
-    return result
-  end
-
-  result
+  result = move_horizontally([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
+  move_cell(cell, dir, grid) if result
 end
 
 def can_move_vertically?(cell, dir, grid)
@@ -87,21 +82,16 @@ def can_move_vertically?(cell, dir, grid)
 
   if robot?(grid, cell)
     result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
-    return result if result
   end
 
   if left_box?(grid, cell)
     result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-              can_move_vertically?([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
-
-    return result if result
+               can_move_vertically?([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
   end
 
   if right_box?(grid, cell)
     result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-              can_move_vertically?([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
-
-    return result if result
+               can_move_vertically?([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
   end
 
   result
