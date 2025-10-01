@@ -11,9 +11,9 @@ def sum_of_gps_coordinates(input)
     end
   end
 
-  moves.each_with_index do |move, idx|
+  moves.each_with_index do |move, _idx|
     dir = next_direction(move)
-    result = if %[<>].include?(move)
+    result = if %(<>).include?(move)
                # horizontal moves are pretty easy
                # as they happen always in a single row
                move_horizontally(robot, dir, grid)
@@ -33,6 +33,7 @@ def sum_of_gps_coordinates(input)
   grid.each_with_index do |row, i|
     row.each_with_index do |cell, y|
       next unless cell == '['
+
       sum += 100 * i + y
     end
   end
@@ -47,15 +48,15 @@ def double_grid(grid)
     new_row = []
 
     row.each do |cell|
-      if cell == '#'
-        new_row << ['#', '#']
-      elsif cell == '@'
-        new_row << ['@', '.']
-      elsif cell == '.'
-        new_row << ['.', '.']
-      else
-        new_row << ['[', ']']
-      end
+      new_row << if cell == '#'
+                   ['#', '#']
+                 elsif cell == '@'
+                   ['@', '.']
+                 elsif cell == '.'
+                   ['.', '.']
+                 else
+                   ['[', ']']
+                 end
     end
 
     new_grid << new_row.flatten
@@ -67,10 +68,9 @@ end
 def move_horizontally(cell, dir, grid)
   return nil if grid[cell[0]][cell[1]] == '#'
   return true if grid[cell[0]][cell[1]] == '.'
-  result = false
 
   # when moving left or right we simply move all boxes across a line
-  result = move_horizontally([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
+  result = move_horizontally([cell[0] + dir[0], cell[1] + dir[1]], dir, grid)
   move_cell(cell, dir, grid) if result
 end
 
@@ -78,20 +78,19 @@ def can_move_vertically?(cell, dir, grid)
   # if wall, do nothing
   return nil if grid[cell[0]][cell[1]] == '#'
   return true if grid[cell[0]][cell[1]] == '.'
+
   result = false
 
-  if robot?(grid, cell)
-    result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
-  end
+  result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) if robot?(grid, cell)
 
   if left_box?(grid, cell)
     result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-               can_move_vertically?([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
+             can_move_vertically?([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
   end
 
   if right_box?(grid, cell)
     result = can_move_vertically?([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-               can_move_vertically?([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
+             can_move_vertically?([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
   end
 
   result
@@ -101,16 +100,17 @@ def move_vertically(cell, dir, grid)
   # if wall, do nothing
   return nil if grid[cell[0]][cell[1]] == '#'
   return true if grid[cell[0]][cell[1]] == '.'
+
   result = false
 
   if robot?(grid, cell)
-    result = move_vertically([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) 
+    result = move_vertically([cell[0] + dir[0], cell[1] + dir[1]], dir, grid)
     move_cell(cell, dir, grid) if result
   end
 
   if left_box?(grid, cell)
     result = move_vertically([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-              move_vertically([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
+             move_vertically([cell[0] + dir[0], cell[1] + 1 + dir[1]], dir, grid)
     if result
       move_cell(cell, dir, grid)
       move_cell([cell[0], cell[1] + 1], dir, grid)
@@ -120,7 +120,7 @@ def move_vertically(cell, dir, grid)
 
   if right_box?(grid, cell)
     result = move_vertically([cell[0] + dir[0], cell[1] + dir[1]], dir, grid) &&
-      move_vertically([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
+             move_vertically([cell[0] + dir[0], cell[1] - 1 + dir[1]], dir, grid)
     if result
       move_cell(cell, dir, grid)
       move_cell([cell[0], cell[1] - 1], dir, grid)
@@ -180,118 +180,118 @@ require_relative 'assert'
 extend SuperDuperAssertions
 
 horizontal = <<~INPUT
-#########
-#.@.OO..#
-#########
+  #########
+  #.@.OO..#
+  #########
 
->>>>>>>>>
+  >>>>>>>>>
 INPUT
 
-assert("moves boxes right horizontally", sum_of_gps_coordinates(horizontal), 226)
+assert('moves boxes right horizontally', sum_of_gps_coordinates(horizontal), 226)
 
 horizontal = <<~INPUT
-#########
-#..OO..@#
-#########
+  #########
+  #..OO..@#
+  #########
 
-<<<<<<<<<<
+  <<<<<<<<<<
 INPUT
 
-assert("moves boxes left horizontally", sum_of_gps_coordinates(horizontal), 206)
+assert('moves boxes left horizontally', sum_of_gps_coordinates(horizontal), 206)
 
 vertical_1 = <<~INPUT
-#########
-#.......#
-#....O..#
-#....@..#
-#########
+  #########
+  #.......#
+  #....O..#
+  #....@..#
+  #########
 
->^
+  >^
 INPUT
 
-assert("moves simple boxes vertically upwards", sum_of_gps_coordinates(vertical_1), 110)
+assert('moves simple boxes vertically upwards', sum_of_gps_coordinates(vertical_1), 110)
 
 vertical_2 = <<~INPUT
-#########
-#....@..#
-#....O..#
-#.......#
-#########
+  #########
+  #....@..#
+  #....O..#
+  #.......#
+  #########
 
->v
+  >v
 INPUT
 
-assert("moves simple boxes vertically downwards", sum_of_gps_coordinates(vertical_2), 310)
+assert('moves simple boxes vertically downwards', sum_of_gps_coordinates(vertical_2), 310)
 
 vertical_3 = <<~INPUT
-#########
-#....@..#
-#....O..#
-#....O..#
-#.......#
-#.......#
-#########
+  #########
+  #....@..#
+  #....O..#
+  #....O..#
+  #.......#
+  #.......#
+  #########
 
->vvv
+  >vvv
 INPUT
 
-assert("moves connected boxes 1", sum_of_gps_coordinates(vertical_3), 920)
+assert('moves connected boxes 1', sum_of_gps_coordinates(vertical_3), 920)
 
 vertical_4 = <<~INPUT
-#########
-#.......#
-#...@O..#
-#....OO.#
-#.......#
-#.......#
-#########
+  #########
+  #.......#
+  #...@O..#
+  #....OO.#
+  #.......#
+  #.......#
+  #########
 
->>^>>vv
+  >>^>>vv
 INPUT
 
-assert("moves connected boxes 1", sum_of_gps_coordinates(vertical_4), 1433)
+assert('moves connected boxes 1', sum_of_gps_coordinates(vertical_4), 1433)
 
 vertical_5 = <<~INPUT
-##########
-#........#
-#.@O.....#
-#..#O....#
-#...O....#
-#....#...#
-#........#
-##########
+  ##########
+  #........#
+  #.@O.....#
+  #..#O....#
+  #...O....#
+  #....#...#
+  #........#
+  ##########
 
->>^>>v
+  >>^>>v
 INPUT
 
-assert("moves a pyramid of boxes", sum_of_gps_coordinates(vertical_5), 923)
+assert('moves a pyramid of boxes', sum_of_gps_coordinates(vertical_5), 923)
 
 larger_example = <<~INPUT
-##########
-#..O..O.O#
-#......O.#
-#.OO..O.O#
-#..O@..O.#
-#O#..O...#
-#O..O..O.#
-#.OO.O.OO#
-#....O...#
-##########
+  ##########
+  #..O..O.O#
+  #......O.#
+  #.OO..O.O#
+  #..O@..O.#
+  #O#..O...#
+  #O..O..O.#
+  #.OO.O.OO#
+  #....O...#
+  ##########
 
-<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
-vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
-><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
-<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
-^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
-^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
->^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
-<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
-^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
-v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
+  <vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+  vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+  ><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+  <<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+  ^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+  ^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+  >^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+  <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+  ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+  v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
 INPUT
 
-assert("calculates with the larger example", sum_of_gps_coordinates(larger_example), 9021)
+assert('calculates with the larger example', sum_of_gps_coordinates(larger_example), 9021)
 
 real_input = File.read('input15.txt')
 
-assert("calculates with the real input", sum_of_gps_coordinates(real_input), 1550677)
+assert('calculates with the real input', sum_of_gps_coordinates(real_input), 1_550_677)
