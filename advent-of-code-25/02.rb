@@ -7,9 +7,9 @@ def invalid_ids(input)
   ranges.reduce(0) do |sum, range|
     range_sum = range.filter do |i|
       num = i.to_s
-      (0..num.size - 1).any? do |substr| 
-        match = num.match(/(#{num[0..substr]}){2,}/)
-        match.to_a.any? && match[0] == num
+      
+      (1..num.size / 2).any? do |y|
+        num.size % y == 0 && num[...y] * (num.size / y) == num
       end
     end.flatten.sum
     sum += range_sum
