@@ -1,0 +1,80 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --background: #e6e9fb;
+  --container-color: #ffffff;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  background-color: var(--background);
+  height: 100vh;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background-color: var(--container-color);
+  border-radius: 1rem;
+  box-shadow: 5px 5px 4px rgba(255, 255, 255, 40%);
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  width: 100%;
+  width: 458px;
+  font-family: "Merriweather", serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: #0f172a;
+  text-align: center;
+}
+
+.stars {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 32px;
+}
+
+.feedback {
+  width: 647px;
+  font-family: "Poppins", sans-serif;
+  font-size: 1.125rem;
+  color: #374151;
+  text-align: center;
+}
+
+.star {
+  cursor: pointer;
+}
+
+.star:hover > svg > path,
+.star:hover ~ .star > svg > path {
+  fill: #facc15;
+}
+
+.star-inactive > svg > path {
+  fill: #e2e8f0;
+}
+
+.star-active > svg > path {
+  fill: #facc15;
+}
