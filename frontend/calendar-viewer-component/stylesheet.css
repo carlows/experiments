@@ -1,0 +1,151 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --background-color: #f4f3ff;
+  --main-text-color: #171D35;
+  --action-color: #744AFF;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+.container {
+  background-color: var(--background-color);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.shapes {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 1;
+}
+
+.calendar {
+  z-index: 10;
+  min-width: 669px;
+  min-height: 631px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 7px 29px 0 rgba(100, 100, 111, 0.2);
+  padding: 60px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 60px;
+}
+
+.controls {
+  display: flex;
+  gap: 30px;
+}
+
+.left-arrow, .right-arrow {
+  cursor: pointer;
+}
+
+.month {
+  font-size: 2.25rem;
+  font-weight: bold;
+  color: var(--main-text-color);
+}
+
+.calendar-body-heading {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 50px;
+  margin-bottom: 25px;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 25px 50px;
+  /* justify-content: center; */
+  /* align-items: center; */
+}
+
+.day {
+  font-size: 1.375rem;
+  color: var(--main-text-color);
+  text-align: center;
+  border-radius: 100%;
+  height: 50px;
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.day:not(.day-today):not(.day-header):hover {
+  background-color: rgba(116, 74, 255, 0.1);
+}
+
+.day-today {
+  background-color: var(--action-color);
+  color: #ffffff;
+}
+
+.day-outside {
+  opacity: 0.4;
+}
+
+.day-header {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: var(--main-text-color);
+}
+
+.shape {
+  position: absolute;
+  z-index: 5;
+}
+
+#triangle-five {
+  top: 0;
+  right: 20%;
+}
+
+#triangle-four {
+  top: 10%;
+  left: 10%;
+}
+
+#triangle-three {
+  bottom: 0;
+  right: 0;
+}
+
+#triangle-one {
+  bottom: 10%;
+  left: 10%;
+}
+
+#triangle-two {
+  top: 15%;
+  right: 10%;
+}
+
+#circle-one {
+  bottom: 20%;
+  left: 40%;
+}
+
+#circle-two {
+  top: 10%;
+  left: 45%;
+}
