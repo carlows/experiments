@@ -15,6 +15,9 @@ OptionParser.new do |o|
   o.on('-v', '--invert', 'Inverts the pattern to exclude the matches') do |v|
     options[:invert] = true
   end
+  o.on('-i', '--ignore-case', 'Ignore case distinctions') do |v|
+    options[:ignore_case] = true
+  end
   o.parse!
 end
 pattern = ARGV[0]

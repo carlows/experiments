@@ -4,6 +4,7 @@ require 'find'
 
 class Grep
   attr_reader :pattern, :filedirs, :recursive, :invert, :piped
+  attr_reader :ignore_case
 
   def initialize(pattern, filedirs, options = {})
     @pattern = pattern
@@ -11,6 +12,7 @@ class Grep
     @recursive = options[:recursive]
     @invert = options[:invert]
     @piped = options[:piped]
+    @ignore_case = options[:ignore_case]
   end
 
   def run_from_filepaths
@@ -38,7 +40,9 @@ class Grep
   end
 
   def matches?(line)
-    invert ? !line.include?(pattern) : line.include?(pattern)
+    opts = ignore_case ? 'i' : ''
+    expr = Regexp.compile(pattern, opts)
+    invert ? !line.match?(expr) : line.match?(expr)
   end
 
   def paths_to_read
