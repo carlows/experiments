@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 require 'find'
+require_relative './regex'
+
+class String
+  def match?(expr)
+    Regex::Matcher.new(expr).match?(self)
+  end
+end
 
 class Grep
   attr_reader :pattern, :filedirs, :recursive, :invert, :piped
@@ -40,9 +47,9 @@ class Grep
   end
 
   def matches?(line)
-    opts = ignore_case ? 'i' : ''
-    expr = Regexp.compile(pattern, opts)
-    invert ? !line.match?(expr) : line.match?(expr)
+    # opts = ignore_case ? 'i' : ''
+    # expr = Regexp.compile(pattern, opts)
+    invert ? !line.match?(pattern) : line.match?(pattern)
   end
 
   def paths_to_read
