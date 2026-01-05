@@ -173,24 +173,26 @@ module Regex
     end
 
     def match?(text)
-      current_states = add_next_state(@start_state, [])
+      current_states = add_next_state(@start_state, [], is_start: true, is_end: text.empty?)
 
-      text.chars.each do |char|
+      text.chars.each_with_index do |char, index|
         next_states = []
 
-        return true if has_match?(current_states)
+        return true if success?(current_states)
 
         current_states.each do |state|
           next unless literal_match?(state, char)
 
-          add_next_state(state.out1, next_states)
+          is_end = (index + 1) == text.length
+          add_next_state(state.out1, next_states, is_start: false, is_end: is_end)
         end
-        add_next_state(@start_state, next_states)
+
+        add_next_state(@start_state, next_states, is_start: false, is_end: (index + 1) == text.length)
 
         current_states = next_states
       end
 
-      has_match?(current_states)
+      success?(current_states)
     end
 
     private
@@ -203,16 +205,26 @@ module Regex
       state.label == char
     end
 
-    def has_match?(current_states)
+    def success?(current_states)
       current_states.any? { |s| s.label.nil? && s.out1.nil? && s.out2.nil? }
     end
 
-    def add_next_state(state, state_list)
+    def add_next_state(state, state_list, is_start:, is_end:)
       return state_list if state.nil? || state_list.include?(state)
 
+      if state.label == '^'
+        add_next_state(state.out1, state_list, is_start: is_start, is_end: is_end) if is_start
+        return state_list
+      end
+
+      if state.label == '$'
+        add_next_state(state.out1, state_list, is_start: is_start, is_end: is_end) if is_end
+        return state_list
+      end
+
       if state.label.nil? && !(state.out1.nil? && state.out2.nil?)
-        add_next_state(state.out1, state_list)
-        add_next_state(state.out2, state_list)
+        add_next_state(state.out1, state_list, is_start: is_start, is_end: is_end)
+        add_next_state(state.out2, state_list, is_start: is_start, is_end: is_end)
       else
         state_list << state
       end
