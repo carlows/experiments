@@ -2,15 +2,15 @@ module Regex
   class Parser
     CONCAT_CHAR = '.'
 
-    def self.insert_explicit_concat(pattern)
-      output = ''
+    def self.insert_explicit_concat(tokens)
+      output = []
 
-      pattern.chars.each_with_index do |token, i|
+      tokens.each_with_index do |token, i|
         output << token
 
-        next if i == pattern.length - 1
+        next if i == tokens.length - 1
 
-        next_token = pattern[i + 1]
+        next_token = tokens[i + 1]
 
         token_ends_expression = !['(', '|'].include?(token)
         next_token_starts_expression = ![')', '|', '*', '+', '?'].include?(next_token)
@@ -21,15 +21,40 @@ module Regex
       output
     end
 
-    def self.to_postfix(pattern)
-      expanded_pattern = insert_explicit_concat(pattern)
+    def self.to_tokens(pattern)
+      tokens = []
+
+      curr = 0
+      while curr < pattern.size
+        case pattern[curr]
+        when '\\'
+          next_token = pattern[curr + 1]
+
+          tokens << if next_token.nil?
+                      pattern[curr]
+                    else
+                      pattern[curr] + next_token
+                    end
+
+          curr += 2
+        else
+          tokens << pattern[curr]
+          curr += 1
+        end
+      end
+
+      tokens
+    end
+
+    def self.to_postfix(tokens)
+      expanded_pattern = insert_explicit_concat(tokens)
 
       output_queue = []
       operator_stack = []
 
       precedence = { '*' => 3, '+' => 3, '?' => 3, '.' => 2, '|' => 1 }
 
-      expanded_pattern.chars.each do |token|
+      expanded_pattern.each do |token|
         if token == '('
           operator_stack.push(token)
         elsif token == ')'
@@ -49,7 +74,7 @@ module Regex
 
       output_queue << operator_stack.pop while operator_stack.any?
 
-      output_queue.join
+      output_queue
     end
   end
 
@@ -83,10 +108,10 @@ module Regex
   end
 
   class Compiler
-    def self.compile(postfix)
+    def self.compile(tokens)
       stack = []
 
-      postfix.chars.each do |token|
+      tokens.each do |token|
         case token
         when '.'
           frag2 = stack.pop
@@ -142,7 +167,8 @@ module Regex
 
   class Matcher
     def initialize(pattern)
-      postfix = Parser.to_postfix(pattern)
+      tokens = Parser.to_tokens(pattern)
+      postfix = Parser.to_postfix(tokens)
       @start_state = Compiler.compile(postfix)
     end
 
@@ -155,7 +181,7 @@ module Regex
         return true if has_match?(current_states)
 
         current_states.each do |state|
-          next unless state.label == char
+          next unless literal_match?(state, char)
 
           add_next_state(state.out1, next_states)
         end
@@ -168,6 +194,13 @@ module Regex
     end
 
     private
+
+    def literal_match?(state, char)
+      digits = %w[0 1 2 3 4 5 6 7 8 9]
+      return true if state.label == '\d' && digits.include?(char)
+
+      state.label == char
+    end
 
     def has_match?(current_states)
       current_states.any? { |s| s.label.nil? && s.out1.nil? && s.out2.nil? }
