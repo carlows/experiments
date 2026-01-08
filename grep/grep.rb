@@ -4,8 +4,8 @@ require 'find'
 require_relative './regex'
 
 class String
-  def match?(expr)
-    Regex::Matcher.new(expr).match?(self)
+  def match?(expr, opts)
+    Regex::Matcher.new(expr, opts).match?(self)
   end
 end
 
@@ -47,9 +47,8 @@ class Grep
   end
 
   def matches?(line)
-    # opts = ignore_case ? 'i' : ''
-    # expr = Regexp.compile(pattern, opts)
-    invert ? !line.match?(pattern) : line.match?(pattern)
+    opts = { ignore_case: }
+    invert ? !line.match?(pattern, opts) : line.match?(pattern, opts)
   end
 
   def paths_to_read

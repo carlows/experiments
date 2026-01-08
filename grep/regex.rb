@@ -166,10 +166,11 @@ module Regex
   end
 
   class Matcher
-    def initialize(pattern)
+    def initialize(pattern, options = {})
       tokens = Parser.to_tokens(pattern)
       postfix = Parser.to_postfix(tokens)
       @start_state = Compiler.compile(postfix)
+      @ignore_case = options[:ignore_case] || false
     end
 
     def match?(text)
@@ -198,11 +199,12 @@ module Regex
     private
 
     def literal_match?(state, char)
+      char_with_case = @ignore_case ? char.downcase : char
       digits = %w[0 1 2 3 4 5 6 7 8 9]
       return true if state.label == '\d' && digits.include?(char)
-      return true if state.label == '\w' && ('a'..'z').include?(char)
+      return true if state.label == '\w' && ('a'..'z').include?(char_with_case)
 
-      state.label == char
+      state.label == char_with_case
     end
 
     def success?(current_states)
