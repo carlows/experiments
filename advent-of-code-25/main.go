@@ -15,4 +15,5 @@ func assert(message string, actual any, expected any) {
 
 func main() {
 	Day01()
+	Day02()
 }
