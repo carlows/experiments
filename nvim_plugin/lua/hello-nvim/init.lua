@@ -75,4 +75,24 @@ function M.show_selection()
 	end, { buffer = stats_buf, silent = true })
 end
 
+function M.open_in_chrome()
+    local filepath = vim.api.nvim_buf_get_name(0)
+    if filepath == "" then
+        vim.notify("Current buffer has no file path", vim.log.levels.ERROR)
+        return
+    end
+    -- 'open' is macOS specific. 
+    -- For Chrome specifically: open -a "Google Chrome"
+    local cmd = { "open", "-a", "Google Chrome", filepath }
+
+    vim.fn.jobstart(cmd, {
+        detach = true,
+        on_exit = function(_, exit_code)
+            if exit_code ~= 0 then
+                vim.notify("Failed to open Chrome", vim.log.levels.ERROR)
+            end
+        end
+    })
+end
+
 return M

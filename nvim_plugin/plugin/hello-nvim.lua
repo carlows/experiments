@@ -8,6 +8,10 @@ vim.api.nvim_create_user_command('HelloTimestamp', function()
   require('hello-nvim').add_timestamp()
 end, { desc = "Adds a timestamp comment below the current line" })
 
+vim.api.nvim_create_user_command('OpenInChrome', function()
+  require('hello-nvim').open_in_chrome()
+end, { desc = "Opens the current file in chrome" })
+
 vim.api.nvim_create_user_command('HelloSelection', function()
   require('hello-nvim').show_selection()
 end, { range = true, desc = "Shows the current selection in a buffer window" })
