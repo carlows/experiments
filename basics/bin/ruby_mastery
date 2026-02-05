@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/ruby_mastery/trainer'
+require_relative '../lib/ruby_mastery/challenges/equality'
+require_relative '../lib/ruby_mastery/challenges/inheritance'
+require_relative '../lib/ruby_mastery/challenges/metaprogramming'
+require_relative '../lib/ruby_mastery/challenges/gotchas'
+
+trainer = RubyMastery::Trainer.new
+trainer.add_challenge(RubyMastery::Challenges::Equality.new)
+trainer.add_challenge(RubyMastery::Challenges::Inheritance.new)
+trainer.add_challenge(RubyMastery::Challenges::Metaprogramming.new)
+trainer.add_challenge(RubyMastery::Challenges::Gotchas.new)
+
+trainer.start
