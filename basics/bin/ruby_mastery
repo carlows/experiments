@@ -1,15 +1,13 @@
 #!/usr/bin/env ruby
 
 require_relative '../lib/ruby_mastery/trainer'
-require_relative '../lib/ruby_mastery/challenges/equality'
-require_relative '../lib/ruby_mastery/challenges/inheritance'
-require_relative '../lib/ruby_mastery/challenges/metaprogramming'
-require_relative '../lib/ruby_mastery/challenges/gotchas'
+require_relative '../lib/ruby_mastery/challenges/smart_record'
+require_relative '../lib/ruby_mastery/challenges/resilient_processor'
+require_relative '../lib/ruby_mastery/challenges/middleware_chain'
 
 trainer = RubyMastery::Trainer.new
-trainer.add_challenge(RubyMastery::Challenges::Equality.new)
-trainer.add_challenge(RubyMastery::Challenges::Inheritance.new)
-trainer.add_challenge(RubyMastery::Challenges::Metaprogramming.new)
-trainer.add_challenge(RubyMastery::Challenges::Gotchas.new)
+trainer.add_challenge(RubyMastery::Challenges::SmartRecord.new)
+trainer.add_challenge(RubyMastery::Challenges::ResilientProcessor.new)
+trainer.add_challenge(RubyMastery::Challenges::MiddlewareChain.new)
 
 trainer.start

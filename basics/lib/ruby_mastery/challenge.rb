@@ -1,4 +1,5 @@
 require 'colorize'
+require 'fileutils'
 
 module RubyMastery
   class Challenge
@@ -13,31 +14,29 @@ module RubyMastery
       raise NotImplementedError
     end
 
+    # This should be overridden by subclasses to provide expert-level explanations
+    def debrief
+      puts "\n--- Sensei's Note ---".colorize(:blue).bold
+      puts "Great job completing this kata! Here's a breakdown of the core concepts you explored."
+    end
+
     def verify
-      # We check for __ but we should define it so the file actually runs
-      # if the user hasn't replaced it yet.
-
-      content = File.read(@file_path)
-
-      # Inject the __ helper if it's missing, so the file is syntactically valid
-      unless content.include?('def __')
-        content = "def __; :blank; end\n" + content
-        File.write(@file_path, content)
+      # We check if the file exists first
+      unless File.exist?(@file_path)
+        puts 'File not found! Run setup first.'.colorize(:red)
+        return false
       end
 
       # Run the ruby file and capture output
       output = `ruby #{@file_path} 2>&1`
       success = $?.success?
 
-      if success && !File.read(@file_path).include?(':blank')
+      if success
         puts '✨ Excellent work! The kata is complete.'.colorize(:green).bold
+        debrief
         true
       else
-        if File.read(@file_path).include?(':blank') || content.include?('__')
-          puts 'You still have some blanks (__) to fill in!'.colorize(:yellow)
-        else
-          puts '❌ Not quite there yet. Ruby reported an error:'.colorize(:red)
-        end
+        puts '❌ Not quite there yet. Ruby reported an error:'.colorize(:red)
         puts '-' * 40
         puts output.colorize(:light_black)
         puts '-' * 40
@@ -48,11 +47,9 @@ module RubyMastery
     protected
 
     def write_kata(content)
-      # Ensure the directory exists
       FileUtils.mkdir_p(File.dirname(@file_path))
       File.write(@file_path, content)
       puts "Kata generated at: #{@file_path.colorize(:cyan)}"
     end
   end
 end
-require 'fileutils'
