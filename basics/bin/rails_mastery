@@ -3,6 +3,7 @@
 require 'tty-prompt'
 require 'colorize'
 require_relative '../lib/rails_mastery/rails_challenge'
+require_relative '../lib/rails_mastery/stats'
 require_relative '../lib/rails_mastery/challenges/composable_scopes'
 require_relative '../lib/rails_mastery/challenges/n_plus_one'
 require_relative '../lib/rails_mastery/challenges/batch_processing'
@@ -29,12 +30,25 @@ module RailsMastery
       puts "Welcome to Rails & Postgres Mastery Katas!".colorize(:cyan).bold
       
       loop do
-        choices = @challenges.map { |c| { name: c.name, value: c } }
+        choices = [
+          { name: "View Mastery Profile", value: :profile },
+          { name: "--- Modules ---", disabled: "(Select below)" }
+        ]
+        choices += @challenges.map { |c| { name: c.name, value: c } }
         choices << { name: "Exit", value: :exit }
         
-        challenge = @prompt.select("Choose a Rails module to practice:", choices)
-        break if challenge == :exit
+        choice = @prompt.select("Main Menu:", choices)
         
+        case choice
+        when :profile
+          RubyMastery::Stats.display
+          @prompt.keypress("Press any key to return...")
+          next
+        when :exit
+          break
+        end
+
+        challenge = choice
         puts "Setting up database and kata file...".colorize(:yellow)
         challenge.setup
         

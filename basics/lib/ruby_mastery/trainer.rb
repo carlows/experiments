@@ -1,5 +1,6 @@
 require 'tty-prompt'
 require 'colorize'
+require_relative 'stats'
 
 module RubyMastery
   class Trainer
@@ -17,16 +18,27 @@ module RubyMastery
       puts "Now in 'Fix-it' mode. You will edit files to make tests pass."
 
       loop do
-        choices = @challenges.map { |c| { name: c.name, value: c } }
+        choices = [
+          { name: 'View Mastery Profile', value: :profile },
+          { name: '--- Modules ---', disabled: '(Select below)' }
+        ]
+        choices += @challenges.map { |c| { name: c.name, value: c } }
         choices << { name: 'Exit', value: :exit }
 
-        challenge = @prompt.select('Choose a module to practice:', choices)
-        break if challenge == :exit
+        choice = @prompt.select('Main Menu:', choices)
 
-        # 1. Setup the file
+        case choice
+        when :profile
+          RubyMastery::Stats.display
+          @prompt.keypress('Press any key to return...')
+          next
+        when :exit
+          break
+        end
+
+        challenge = choice
         challenge.setup
 
-        # 2. Enter verify loop
         loop do
           action = @prompt.select("File is ready at #{challenge.file_path}. What's next?", [
                                     { name: 'Verify my solution', value: :verify },

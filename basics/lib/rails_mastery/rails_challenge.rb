@@ -2,7 +2,7 @@ require 'active_record'
 require 'pg'
 require 'colorize'
 require 'fileutils'
-require 'database_cleaner/active_record'
+require_relative 'stats'
 
 module RailsMastery
   class RailsChallenge
@@ -15,7 +15,6 @@ module RailsMastery
     end
 
     def setup_database
-      # Connect to default postgres to create/drop the test database
       begin
         conn = PG.connect(dbname: 'postgres')
         conn.exec("DROP DATABASE IF EXISTS #{@db_name}")
@@ -27,7 +26,6 @@ module RailsMastery
         exit 1
       end
 
-      # Connect ActiveRecord to the new database
       ActiveRecord::Base.establish_connection(
         adapter: 'postgresql',
         database: @db_name,
@@ -35,10 +33,14 @@ module RailsMastery
       )
     end
 
-    def setup
+    def reset_db
       setup_database
       define_schema
       seed_data
+    end
+
+    def setup
+      reset_db
       write_kata_file
     end
 
@@ -47,7 +49,6 @@ module RailsMastery
     end
 
     def seed_data
-      # Optional override
     end
 
     def write_kata_file
@@ -64,12 +65,16 @@ module RailsMastery
         return false
       end
 
-      # Run the file with the database name passed as an environment variable
+      # 1. Reset the database state before every verification
+      reset_db
+
+      # 2. Run the file
       output = `DB_NAME=#{@db_name} ruby #{@file_path} 2>&1`
       success = $?.success?
 
       if success
         puts '✨ Excellent work! The Rails kata is complete.'.colorize(:green).bold
+        RubyMastery::Stats.log_completion(@name)
         debrief
         true
       else
@@ -84,7 +89,6 @@ module RailsMastery
     protected
 
     def write_file(content)
-      # Prepend the DB connection boilerplate so the kata file is standalone
       boilerplate = <<~RUBY
         require 'active_record'
         require 'pg'
@@ -94,9 +98,6 @@ module RailsMastery
           database: ENV['DB_NAME'],
           host: 'localhost'
         )
-
-        # Silence logger for cleaner output, but you can enable it for debugging
-        # ActiveRecord::Base.logger = Logger.new(STDOUT)
       RUBY
 
       FileUtils.mkdir_p(File.dirname(@file_path))

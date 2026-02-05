@@ -4,53 +4,110 @@ module RailsMastery
   module Challenges
     class JsonbSearch < RailsChallenge
       def initialize
-        super('The JSONB Search (GIN Indexes)', '05_jsonb_search.rb')
+        super('The JSONB Search (10-Stage Schema-less)', '05_jsonb_search.rb')
       end
 
       def define_schema
         ActiveRecord::Schema.define do
-          # Postgres JSONB support
           enable_extension 'plpgsql'
           create_table :events, force: true do |t|
             t.string :name
             t.jsonb :payload, default: {}
+            t.jsonb :settings, default: {}
           end
         end
       end
 
       def seed_data
-        Event.create!(name: 'click', payload: { 'browser' => 'Chrome', 'os' => 'macOS' })
-        Event.create!(name: 'hover', payload: { 'browser' => 'Firefox', 'os' => 'Windows' })
+        Event.create!(name: 'login',
+                      payload: { 'user' => { 'id' => 1, 'roles' => %w[admin editor] },
+                                 'ip' => '1.1.1.1' })
+        Event.create!(name: 'click', payload: { 'button' => 'submit', 'page' => 'home', 'tags' => ['urgent'] })
       end
 
       def write_kata_file
         content = <<~RUBY
           class Event < ActiveRecord::Base; end
 
-          # --- YOUR TASK ---
-          # 1. Add a GIN index to the 'payload' column to speed up searches.
-          # 2. Implement a search method that uses the '@>' (containment) operator.
+          # --- YOUR MISSION ---
+          # Master Postgres JSONB operators and indexing.
 
-          class EventSearch
-            def self.by_browser(browser_name)
-              # TODO: Use raw SQL with the containment operator for performance
-              # Event.where("payload @> ?", { browser: browser_name }.to_json)
+          class JsonbMaster
+            # 1. Existence: Find events where 'payload' contains the key 'ip'.
+            def self.has_ip
+            end
+
+            # 2. Containment: Find events where 'payload' contains { "button" => "submit" }.
+            # Requirement: Use the '@>' operator.
+            def self.is_submit_click
+            end
+
+            # 3. Array Inclusion: Find events where 'roles' array in payload contains 'admin'.
+            # Path: payload -> user -> roles
+            def self.is_admin_action
+            end
+
+            # 4. Value Extraction: Fetch all 'ip' values as a flat array of strings.
+            def self.all_ips
+            end
+
+            # 5. Deep Extraction: Find events where 'payload -> user -> id' is 1.
+            def self.user_one_events
+            end
+
+            # 6. JSONB GIN Index: Add a GIN index to the 'payload' column.
+            def self.add_payload_index
+            end
+
+            # 7. Path GIN Index: Add a specialized GIN index ONLY for the 'tags' array inside payload.
+            def self.add_tags_index
+            end
+
+            # 8. Merge/Update: Implementation of a method to update 'settings'#{' '}
+            # by merging { "theme" => "dark" } into existing JSON.
+            def self.set_dark_mode(event_id)
+            end
+
+            # 9. Key Removal: Remove the 'ip' key from the payload.
+            def self.strip_ips(event_id)
+            end
+
+            # 10. Complex Query: Find events where 'tags' contains 'urgent'#{' '}
+            # AND 'page' is 'home' in a single query.
+            def self.urgent_home_events
             end
           end
 
           # --- TEST SUITE ---
-          # 1. Verification of index
-          indexes = ActiveRecord::Base.connection.indexes(:events)
-          gin_index = indexes.find { |i| i.using == :gin }
-          raise "Missing Index: Add a GIN index to 'payload'" unless gin_index
-          puts "✅ GIN index detected"
+          puts "Starting 10-Stage Verification..."
 
-          # 2. Search test
-          res = EventSearch.by_browser("Chrome")
-          raise "Search failed" unless res.count == 1 && res.first.payload["os"] == "macOS"
-          puts "✅ JSONB search works"
+          # 1. Existence
+          res = JsonbMaster.has_ip
+          raise "Ex 1 Failed" unless res&.first&.name == "login"
+          puts "✅ Ex 1 Passed"
 
-          puts "✨ KATA COMPLETE!"
+          # 2. Containment
+          res = JsonbMaster.is_submit_click
+          raise "Ex 2 Failed" unless res&.first&.payload["button"] == "submit"
+          puts "✅ Ex 2 Passed"
+
+          # 3. Array
+          res = JsonbMaster.is_admin_action
+          raise "Ex 3 Failed" unless res&.first&.payload.dig("user", "roles")&.include?("admin")
+          puts "✅ Ex 3 Passed"
+
+          # 6. GIN Index
+          JsonbMaster.add_payload_index
+          raise "Ex 6 Failed" unless ActiveRecord::Base.connection.indexes(:events).any? { |i| i.using == :gin }
+          puts "✅ Ex 6 Passed"
+
+          # 8. Merge
+          e = Event.first
+          JsonbMaster.set_dark_mode(e.id)
+          raise "Ex 8 Failed" unless e.reload.settings["theme"] == "dark"
+          puts "✅ Ex 8 Passed"
+
+          puts "🏆 ALL STAGES COMPLETE!"
         RUBY
         write_file(content)
       end
@@ -58,15 +115,19 @@ module RailsMastery
       def debrief
         super
         puts <<~TEXT
-          ### 1. JSON vs JSONB
-          - `JSON` stores data as plain text. Every time you query it, Postgres has to parse it.
-          - `JSONB` stores data in a binary format. It's slower to write but significantly faster to query and supports indexing.
+          ### 1. The `@>` Operator
+          The "contains" operator is the most efficient way to query JSONB. It allows Postgres to use GIN indexes. For example, `payload @> '{"id": 1}'` is much faster than `payload ->> 'id' = '1'`.
 
-          ### 2. GIN Indexes (Generalized Inverted Index)
-          B-Trees are for sorting. GIN indexes are for "containment." They allow Postgres to index every key and value inside your JSONB blob, making queries like "Find all events where browser is Chrome" lightning fast.
+          ### 2. GIN Indexes
+          Generalized Inverted Indexes are perfect for JSONB because they index every individual key and value.#{' '}
+          *Expert Tip:* If your JSONB is massive, use a "JSONB Path Index" (`jsonb_path_ops`) which is smaller and faster for certain queries but doesn't support the existence operator (`?`).
 
-          ### 3. The Containment Operator (`@>`)
-          In ActiveRecord, you can use `where("payload ->> 'browser' = ?", 'Chrome')`, but this is often slow. The `@>` operator is "Smarter" and can utilize the GIN index effectively.
+          ### 3. JSONB Processing Functions
+          Postgres provides `jsonb_set` for updates and `-` for key removal. Using these allows you to modify parts of a document without pulling the whole thing into Ruby.
+
+          ### 4. Indexing Arrays
+          When indexing an array inside JSONB, you can create an expression index on the path:
+          `CREATE INDEX ... ON events USING GIN ((payload -> 'tags'))`
         TEXT
       end
     end

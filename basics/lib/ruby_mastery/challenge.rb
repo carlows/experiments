@@ -1,5 +1,6 @@
 require 'colorize'
 require 'fileutils'
+require_relative 'stats'
 
 module RubyMastery
   class Challenge
@@ -14,25 +15,23 @@ module RubyMastery
       raise NotImplementedError
     end
 
-    # This should be overridden by subclasses to provide expert-level explanations
     def debrief
       puts "\n--- Sensei's Note ---".colorize(:blue).bold
       puts "Great job completing this kata! Here's a breakdown of the core concepts you explored."
     end
 
     def verify
-      # We check if the file exists first
       unless File.exist?(@file_path)
         puts 'File not found! Run setup first.'.colorize(:red)
         return false
       end
 
-      # Run the ruby file and capture output
       output = `ruby #{@file_path} 2>&1`
       success = $?.success?
 
       if success
         puts '✨ Excellent work! The kata is complete.'.colorize(:green).bold
+        RubyMastery::Stats.log_completion(@name)
         debrief
         true
       else

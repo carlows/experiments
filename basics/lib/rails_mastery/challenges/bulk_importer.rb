@@ -4,57 +4,109 @@ module RailsMastery
   module Challenges
     class BulkImporter < RailsChallenge
       def initialize
-        super('The Bulk Importer (Upserts)', '09_bulk_importer.rb')
+        super('The Bulk Importer (10-Stage Throughput)', '09_bulk_importer.rb')
       end
 
       def define_schema
         ActiveRecord::Schema.define do
-          create_table :skus, force: true do |t|
-            t.string :code, index: { unique: true }
-            t.integer :stock
+          create_table :inventory, force: true do |t|
+            t.string :sku, index: { unique: true }
+            t.integer :quantity, default: 0
+            t.decimal :price
+            t.datetime :updated_at
+            t.datetime :created_at
           end
         end
       end
 
       def seed_data
-        Sku.create!(code: 'A1', stock: 10)
+        Inventory.create!(sku: 'A1', quantity: 10, price: 100.0)
       end
 
       def write_kata_file
         content = <<~RUBY
-          class Sku < ActiveRecord::Base; end
+          class Inventory < ActiveRecord::Base; end
 
-          # --- YOUR TASK ---
-          # You have a list of new stock levels.#{' '}
-          # Some SKUs already exist (A1), some are new (B2).
-          # Use 'upsert_all' to import them in a single query.
-          # If a SKU exists, update its stock. If not, insert it.
+          # --- YOUR MISSION ---
+          # Master high-speed data ingestion.
 
-          class InventorySync
-            def self.sync!(data)
-              # data: [{ code: "A1", stock: 15 }, { code: "B2", stock: 5 }]
-              # TODO: Use Sku.upsert_all
+          class Importer
+            # 1. Bulk Insert: Use 'insert_all' to add 5 new SKUs in ONE query.
+            def self.bulk_add(data)
+            end
+
+            # 2. Upsert: Use 'upsert_all' to update stock for A1 and add B2.
+            # Handle the 'sku' unique constraint conflict.
+            def self.sync_stock(data)
+            end
+
+            # 3. Partial Update: Use 'upsert_all' but ONLY update 'quantity',#{' '}
+            # preserving the original 'price'.
+            # Hint: Use the 'update_only' option.
+            def self.update_stock_only(data)
+            end
+
+            # 4. Timestamps: insert_all doesn't set timestamps. Add them manually in the bulk hash.
+            def self.add_with_timestamps(data)
+            end
+
+            # 5. On Conflict Do Nothing: Insert data but ignore any rows that already exist.
+            def self.safe_import(data)
+            end
+
+            # 6. Bulk Plucking: Return an array of all SKUs using '.pluck'.
+            def self.all_skus
+            end
+
+            # 7. Validations: insert_all skips validations.#{' '}
+            # Implement a 'pre_validate' check that removes hashes with quantity < 0#{' '}
+            # before calling bulk insert.
+            def self.valid_import(data)
+            end
+
+            # 8. Returning Data: Use 'insert_all!' (bang) to return the inserted records' IDs.
+            def self.import_and_get_ids(data)
+            end
+
+            # 9. Duplicate Detection: Before importing, find which SKUs in the input#{' '}
+            # already exist in the database.
+            def self.find_existing(skus_array)
+            end
+
+            # 10. Memory Efficient Import: Given an array of 100k hashes,#{' '}
+            # import them in batches of 5000 using 'insert_all'.
+            def self.mega_import(large_data)
             end
           end
 
           # --- TEST SUITE ---
-          query_count = 0
-          ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
-            query_count += 1 if args.last[:sql] =~ /INSERT/
-          end
+          puts "Starting 10-Stage Verification..."
 
-          InventorySync.sync!([{ code: "A1", stock: 15 }, { code: "B2", stock: 5 }])
+          # 1. Bulk Insert
+          c = Inventory.count
+          Importer.bulk_add([
+            { sku: "B1", price: 10 }, { sku: "B2", price: 10 },#{' '}
+            { sku: "B3", price: 10 }, { sku: "B4", price: 10 }, { sku: "B5", price: 10 }
+          ])
+          raise "Ex 1 Failed" unless Inventory.count == c + 5
+          puts "✅ Ex 1 Passed"
 
-          raise "Bulk Import failed: Expected 1 query, got \#{query_count}" if query_count > 1
+          # 2. Upsert
+          Importer.sync_stock([{ sku: "A1", quantity: 50 }, { sku: "C1", quantity: 5 }])
+          raise "Ex 2 Failed: A1 not updated" unless Inventory.find_by(sku: "A1").quantity == 50
+          puts "✅ Ex 2 Passed"
 
-          sku_a1 = Sku.find_by(code: "A1")
-          raise "Upsert failed: A1 stock not updated" unless sku_a1.stock == 15
+          # 5. Safe Import
+          Importer.safe_import([{ sku: "A1", quantity: 999 }])
+          raise "Ex 5 Failed: A1 was updated but should have been ignored" if Inventory.find_by(sku: "A1").quantity == 999
+          puts "✅ Ex 5 Passed"
 
-          sku_b2 = Sku.find_by(code: "B2")
-          raise "Upsert failed: B2 not inserted" unless sku_b2&.stock == 5
+          # 8. Returning IDs
+          ids = Importer.import_and_get_ids([{ sku: "D1", price: 5 }])
+          raise "Ex 8 Failed" unless ids.first.is_a?(Integer)
+          puts "✅ Ex 8 Passed"
 
-          puts "✅ Bulk upsert completed in a single query"
-          puts "✨ KATA COMPLETE!"
+          puts "🏆 ALL STAGES COMPLETE!"
         RUBY
         write_file(content)
       end
@@ -62,18 +114,25 @@ module RailsMastery
       def debrief
         super
         puts <<~TEXT
-          ### 1. `insert_all` and `upsert_all`
-          Added in Rails 6, these methods bypass the standard ActiveRecord lifecycle (no callbacks, no validations) to perform bulk SQL operations. This is 100x faster than calling `.save` in a loop.
+          ### 1. The Cost of ActiveRecord Objects
+          Instantiating a Ruby object for every row is expensive. `insert_all` sends raw hashes directly to SQL, bypassing validations, callbacks, and object instantiation. This is the difference between an import taking 1 hour and taking 10 seconds.
 
-          ### 2. The Unique Constraint
-          `upsert_all` relies on a unique index in Postgres. When a conflict occurs (i.e., you try to insert a code that already exists), Postgres's `ON CONFLICT` clause triggers an update instead of a crash.
+          ### 2. `ON CONFLICT` (Upsert)
+          `upsert_all` translates to Postgres `INSERT ... ON CONFLICT (unique_column) DO UPDATE`. It's the most efficient way to handle "Create or Update" logic at scale.
 
-          ### 3. Missing Callables
-          Because `upsert_all` goes straight to SQL, `updated_at` and `created_at` are NOT automatically set unless you provide them in the hash. Also, `after_save` callbacks will not run. This is a tradeoff for extreme performance.
+          ### 3. Trade-offs
+          - **No Validations:** You must validate the hashes in Ruby before calling `insert_all`.
+          - **No Callbacks:** `after_create` or `after_commit` hooks will not run.
+          - **No Timestamps:** You must include `created_at` and `updated_at` in your hashes manually.
+
+          ### 4. Bulk Methods
+          - `insert_all`: Simple bulk insert.
+          - `insert_all!`: Raises error on conflict.
+          - `upsert_all`: Update on conflict.
         TEXT
       end
     end
   end
 end
 
-class Sku < ActiveRecord::Base; end
+class Inventory < ActiveRecord::Base; end

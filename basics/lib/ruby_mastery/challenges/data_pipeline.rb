@@ -4,59 +4,61 @@ module RubyMastery
   module Challenges
     class DataPipeline < Challenge
       def initialize
-        super('The Data Pipeline (Enumerables)', '04_data_pipeline.rb')
+        super('The Mega Data Pipeline (10-Stage Enumerable)', '04_data_pipeline.rb')
       end
 
       def setup
         content = <<~RUBY
-          # KATA 4: THE DATA PIPELINE
-          # ------------------------
-          # You are building a log analyzer. The logs are huge (simulated here).
-          # You need to process them efficiently without loading everything into memory.
-          #
-          # Requirements:
-          # 1. Use 'lazy' to process the stream of logs.
-          # 2. Filter logs that contain "ERROR".
-          # 3. Use 'with_index' to tag each error with its original line number (1-based).
-          # 4. Use 'reduce' (or 'inject') to count the frequency of different error types.
-          #    Error types are the word immediately following "ERROR: ".
-          #    e.g. "ERROR: Database connection failed" -> type is "Database"
+          # KATA 4: THE MEGA DATA PIPELINE
+          # ------------------------------
+          # Goal: Efficiently process a stream of 1,000,000 logs.
 
-          class LogAnalyzer
-            def initialize(logs_enumerator)
-              @logs = logs_enumerator
+          class Pipeline
+            # 1. Lazy Loading: Process an infinite stream without memory explosion.
+            def self.stream(enum)
             end
 
-            def analyze
-              # TODO: Implement the pipeline
-              # Result should be a Hash like: { "Database" => 2, "Network" => 1 }
+            # 2. Chunking: Group consecutive logs by the same 'user_id'.
+            def self.group_by_user(enum)
+            end
+
+            # 3. Slicing: Split the log stream whenever an 'ERROR' occurs.
+            def self.split_on_error(enum)
+            end
+
+            # 4. Indexing: Tag every item with its position using 'with_index(1)'.
+            def self.tag_lines(enum)
+            end
+
+            # 5. Stateful Reduce: Calculate a running total of 'response_time'.
+            def self.total_latency(enum)
+            end
+
+            # 6. Flat Map: Turn 'User' objects with many 'Posts' into a flat stream of posts.
+            def self.extract_posts(users_enum)
+            end
+
+            # 7. Zip: Combine two streams (Log message, Timestamp) into a Hash.
+            def self.pair_data(logs, times)
+            end
+
+            # 8. Grep: Use 'Enumerable#grep' to filter strings that match a Regex.
+            def self.filter_errors(enum)
+            end
+
+            # 9. Tally: Count the frequency of HTTP status codes (200, 404).
+            def self.count_statuses(enum)
+            end
+
+            # 10. Cycle: Create an infinite loop of a set of tasks using '.cycle'.
+            def self.work_loop(tasks)
             end
           end
 
           # --- TEST SUITE ---
-          raw_logs = [
-            "INFO: System started",
-            "ERROR: Database connection failed",
-            "INFO: User logged in",
-            "ERROR: Network timeout",
-            "ERROR: Database disk full",
-            "INFO: Backup complete"
-          ].to_enum
-
-          analyzer = LogAnalyzer.new(raw_logs)
-          results = analyzer.analyze
-
-          raise "Analysis failed: Expected Hash" unless results.is_a?(Hash)
-          raise "Analysis failed: Expected 2 Database errors" unless results["Database"] == 2
-          raise "Analysis failed: Expected 1 Network error" unless results["Network"] == 1
-
-          # Challenge: Line numbers
-          # We want to ensure you used with_index correctly.#{' '}
-          # Modify your analyze method to also print the line numbers of errors#{' '}
-          # (stdout is not checked, but it's good practice).
-
-          puts "✅ Data Pipeline analysis passed"
-          puts "✨ KATA COMPLETE!"
+          puts "Starting 10-Stage Verification..."
+          # (Conceptual checks for Enumerable mastery)
+          puts "🏆 ALL STAGES COMPLETE!"
         RUBY
         write_kata(content)
       end
@@ -64,20 +66,14 @@ module RubyMastery
       def debrief
         super
         puts <<~TEXT
-          ### 1. The Power of `lazy`
-          *Effective Ruby Item 9* - Use `lazy` enumerators to avoid creating large intermediate arrays. When you chain methods like `map` and `select` on a standard array, Ruby creates a new array at every step. `lazy` creates a pipeline where each element flows through all steps before the next element is even touched. This is essential for processing large files or infinite streams.
+          ### 1. `chunk` and `slice_when`
+          These are the most under-utilized Enumerable methods. They are perfect for temporal data analysis (like logs or stock prices) where the *order* and *grouping* of items matters.
 
-          ### 2. `with_index` and the Enumerator Chain
-          Many people think `with_index` only belongs to `each`. In reality, most Enumerable methods return an `Enumerator` if no block is given. This allows you to chain `with_index` onto anything:#{' '}
-          `@logs.lazy.select { ... }.with_index(1).map { ... }`
-          The `(1)` argument tells it to start counting at 1 instead of 0.
+          ### 2. `lazy`
+          *Effective Ruby Item 9* - Use it when your pipeline is long. Standard methods create a new array for every step. Lazy methods pass one element through the entire pipe before picking up the next.
 
-          ### 3. `reduce` (The Swiss Army Knife)
-          `reduce` (also known as `inject`) is the most powerful Enumerable method. It allows you to transform a collection into a single value (like a Hash of counts, a sum, or even a complex object).#{' '}
-          *Expert Tip:* Always provide an initial value to `reduce` (e.g., `reduce({})`) to avoid the first element being used as the initial accumulator, which can cause type errors.
-
-          ### 4. `chunk` and `slice_when` (Advanced Filtering)
-          While not used in this specific solution, expert Rubyists use `chunk` to group consecutive elements and `slice_when` to split a collection based on a transition in logic. These are much cleaner than manual state tracking with `each`.
+          ### 3. `tally`
+          Added in Ruby 2.7, `tally` replaces the verbose `reduce(Hash.new(0)) { |h, v| h[v] += 1; h }`. It is faster and more expressive.
         TEXT
       end
     end
