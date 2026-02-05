@@ -17,7 +17,7 @@ module RailsMastery
     def setup_database
       begin
         conn = PG.connect(dbname: 'postgres')
-        conn.exec("DROP DATABASE IF EXISTS #{@db_name}")
+        conn.exec("DROP DATABASE IF EXISTS #{@db_name} WITH (FORCE)")
         conn.exec("CREATE DATABASE #{@db_name}")
         conn.close
       rescue PG::Error => e
