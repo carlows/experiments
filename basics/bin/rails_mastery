@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+
+require 'tty-prompt'
+require 'colorize'
+require_relative '../lib/rails_mastery/rails_challenge'
+require_relative '../lib/rails_mastery/challenges/composable_scopes'
+require_relative '../lib/rails_mastery/challenges/n_plus_one'
+require_relative '../lib/rails_mastery/challenges/batch_processing'
+require_relative '../lib/rails_mastery/challenges/index_whisperer'
+require_relative '../lib/rails_mastery/challenges/jsonb_search'
+require_relative '../lib/rails_mastery/challenges/window_functions'
+require_relative '../lib/rails_mastery/challenges/bank_heist'
+require_relative '../lib/rails_mastery/challenges/tree_walker'
+require_relative '../lib/rails_mastery/challenges/bulk_importer'
+require_relative '../lib/rails_mastery/challenges/fuzzy_finder'
+
+module RailsMastery
+  class Trainer
+    def initialize
+      @prompt = TTY::Prompt.new
+      @challenges = []
+    end
+
+    def add_challenge(challenge)
+      @challenges << challenge
+    end
+
+    def start
+      puts "Welcome to Rails & Postgres Mastery Katas!".colorize(:cyan).bold
+      
+      loop do
+        choices = @challenges.map { |c| { name: c.name, value: c } }
+        choices << { name: "Exit", value: :exit }
+        
+        challenge = @prompt.select("Choose a Rails module to practice:", choices)
+        break if challenge == :exit
+        
+        puts "Setting up database and kata file...".colorize(:yellow)
+        challenge.setup
+        
+        loop do
+          action = @prompt.select("File is ready at #{challenge.file_path}. What's next?", [
+            { name: "Verify my solution", value: :verify },
+            { name: "Reset file (Warning: Overwrites your changes)", value: :reset },
+            { name: "Back to main menu", value: :back }
+          ])
+          
+          case action
+          when :verify
+            break if challenge.verify
+          when :reset
+            challenge.setup
+          when :back
+            break
+          end
+        end
+      end
+      
+      puts "Keep scaling! Goodbye."
+    end
+  end
+end
+
+trainer = RailsMastery::Trainer.new
+trainer.add_challenge(RailsMastery::Challenges::ComposableScopes.new)
+trainer.add_challenge(RailsMastery::Challenges::NPlusOneAssassin.new)
+trainer.add_challenge(RailsMastery::Challenges::BatchProcessing.new)
+trainer.add_challenge(RailsMastery::Challenges::IndexWhisperer.new)
+trainer.add_challenge(RailsMastery::Challenges::JsonbSearch.new)
+trainer.add_challenge(RailsMastery::Challenges::WindowFunctions.new)
+trainer.add_challenge(RailsMastery::Challenges::BankHeist.new)
+trainer.add_challenge(RailsMastery::Challenges::TreeWalker.new)
+trainer.add_challenge(RailsMastery::Challenges::BulkImporter.new)
+trainer.add_challenge(RailsMastery::Challenges::FuzzyFinder.new)
+
+trainer.start

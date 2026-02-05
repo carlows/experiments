@@ -4,10 +4,24 @@ require_relative '../lib/ruby_mastery/trainer'
 require_relative '../lib/ruby_mastery/challenges/smart_record'
 require_relative '../lib/ruby_mastery/challenges/resilient_processor'
 require_relative '../lib/ruby_mastery/challenges/middleware_chain'
+require_relative '../lib/ruby_mastery/challenges/data_pipeline'
+require_relative '../lib/ruby_mastery/challenges/event_bus'
+require_relative '../lib/ruby_mastery/challenges/memory_optimizer'
+require_relative '../lib/ruby_mastery/challenges/dsl_builder'
+require_relative '../lib/ruby_mastery/challenges/pattern_matcher'
+require_relative '../lib/ruby_mastery/challenges/safe_sandbox'
+require_relative '../lib/ruby_mastery/challenges/micro_server'
 
 trainer = RubyMastery::Trainer.new
 trainer.add_challenge(RubyMastery::Challenges::SmartRecord.new)
 trainer.add_challenge(RubyMastery::Challenges::ResilientProcessor.new)
 trainer.add_challenge(RubyMastery::Challenges::MiddlewareChain.new)
+trainer.add_challenge(RubyMastery::Challenges::DataPipeline.new)
+trainer.add_challenge(RubyMastery::Challenges::EventBus.new)
+trainer.add_challenge(RubyMastery::Challenges::MemoryOptimizer.new)
+trainer.add_challenge(RubyMastery::Challenges::DSLBuilder.new)
+trainer.add_challenge(RubyMastery::Challenges::PatternMatcher.new)
+trainer.add_challenge(RubyMastery::Challenges::SafeSandbox.new)
+trainer.add_challenge(RubyMastery::Challenges::MicroServer.new)
 
 trainer.start

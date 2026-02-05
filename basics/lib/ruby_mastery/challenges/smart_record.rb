@@ -11,7 +11,8 @@ module RubyMastery
         content = <<~RUBY
           # KATA 1: THE SMART RECORD
           # ------------------------
-          # In this kata, you will build a micro-ORM base class.
+          # Goal: Build a micro-ORM base class.
+          #
           # Requirements:
           # 1. Attributes should be dynamic based on a 'schema' hash.
           # 2. You must implement custom equality (==) so records with the same ID and class are equal.
@@ -40,7 +41,6 @@ module RubyMastery
             def initialize(id:, **attributes)
               @id = id
               @attributes = attributes
-              # Validation: Ensure attributes match the schema
             end
 
             # TODO: Implement dynamic accessors using method_missing for#{' '}
@@ -48,6 +48,7 @@ module RubyMastery
             # (Basically a fallback)
 
             # TODO: Implement '==' for value equality.
+            # Two records should be equal if they have the same class AND same id.
           end
 
           # --- TEST SUITE ---
@@ -92,10 +93,21 @@ module RubyMastery
       def debrief
         super
         puts <<~TEXT
-          1. **Inheritance Hooks (`self.inherited`)**: Expert Rubyists use this to build registries (like ActiveRecord does for models).
-          2. **define_method vs method_missing**: We used `define_method` for schema fields (fast) and `method_missing` for dynamic attributes (flexible).#{' '}
-          3. **respond_to_missing?**: *Effective Ruby Item 31* - Always implement this when using `method_missing` so that `method()` and `respond_to?` work correctly.
-          4. **Value Equality (`==`)**: By default, `==` checks object identity. Overriding it allows your objects to behave like values (crucial for DDD and testing).
+          ### 1. The Inheritance Hook (`self.inherited`)
+          In Ruby, `inherited` is a callback triggered whenever a class is subclassed. This is a powerful "Expert" pattern used by frameworks like Rails (ActiveRecord) and Sequel to maintain a registry of models without requiring manual registration. It allows the base class to "know" about its children, enabling features like `SmartRecord.all_models`.
+
+          ### 2. `define_method` vs `method_missing`
+          We used both here for different reasons:
+          - **`define_method`**: Used for schema fields. This is "Eager Metaprogramming." Once defined, these methods exist on the class and are just as fast as regular `def` methods.
+          - **`method_missing`**: Used for fallback attributes. This is "Lazy Metaprogramming." It's slower because Ruby has to exhaust the method lookup chain before calling it, but it provides ultimate flexibility for data that doesn't fit a strict schema.
+
+          ### 3. The `respond_to_missing?` Mandate
+          *Effective Ruby Item 31* states: "Always call `respond_to_missing?` when overriding `method_missing`."#{' '}
+          If you don't, your object might answer a method call (via `method_missing`), but `object.respond_to?(:method)` will return `false`. This breaks libraries that check for method existence before calling them (like `Object#method` or delegators).
+
+          ### 4. Equality and the Identity Crisis
+          By default, Ruby's `==` (inherited from `Object`) checks **object identity** (whether two variables point to the same spot in memory). In ORMs and Domain Driven Design, we often want **value equality**. We override `==` so that two different objects representing the same record (same ID) are treated as equal.#{' '}
+          *Note:* If you override `==`, you should usually override `eql?` and `hash` as well if you plan to use these objects as Hash keys.
         TEXT
       end
     end

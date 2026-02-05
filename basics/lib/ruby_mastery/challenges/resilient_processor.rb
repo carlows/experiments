@@ -91,10 +91,20 @@ module RubyMastery
       def debrief
         super
         puts <<~TEXT
-          1. **Mutable Default Arguments**: *Effective Ruby Item 13* - `def initialize(arr = [])` evaluates `[]` once at definition time. Subsequent calls share the *same* array object. Always use `nil` and initialize inside the method.
-          2. **Scope Gates & Threads**: Passing a loop variable into `Thread.new` without an argument can lead to the thread seeing the *latest* value of the variable instead of the value it had when the thread was created.
-          3. **Shared State (Mutex)**: Any time multiple threads modify a shared object (like an Array), you must wrap the mutation in a `Mutex#synchronize` block to prevent data loss or corruption.
-          4. **Exception Safety (`ensure`)**: This block is guaranteed to run even if an exception is raised, making it the perfect place for cleanup or logging.
+          ### 1. Mutable Default Arguments
+          *Effective Ruby Item 13* - This is a legendary Ruby gotcha. When you write `def initialize(arr = [])`, the `[]` is evaluated once when the method is defined. All subsequent calls to `initialize` that rely on the default will share the **exact same Array instance**. If one instance modifies the array, all future instances will see those changes.
+          *Expert Practice:* Use `def initialize(arr = nil); @arr = arr || []; end`.
+
+          ### 2. The Closure Scope Trap
+          In Ruby, blocks are closures—they capture the surrounding local variables by reference. When you spawn a `Thread.new` inside a loop, the thread's block might not run immediately. By the time it does, the loop variable (`item`) might have been updated by the next iteration.#{' '}
+          *Expert Practice:* Always pass loop variables into `Thread.new` as arguments: `Thread.new(item) { |local_item| ... }`. This creates a local copy for that thread's block scope.
+
+          ### 3. Thread-Safe Mutations (The Mutex)
+          Ruby's GVL (Global VM Lock) prevents two threads from executing Ruby code at the same time in MRI, but it doesn't make operations like `array << value` atomic. Between reading the array length and writing the new value, another thread could context-switch in.
+          *Expert Practice:* Protect any shared state mutation with a `Mutex`. A `Mutex#synchronize` block ensures that only one thread can access the protected resource at a time, preventing race conditions and data loss.
+
+          ### 4. Exception Safety with `ensure`
+          *Effective Ruby Item 22* - The `ensure` block is the only way to guarantee that code runs regardless of success or failure. In a resilient system, you use `ensure` to close network sockets, release file locks, or (as in this kata) ensure that audit logs are written even when a worker crashes. Without `ensure`, an unhandled exception would skip your cleanup/logging code.
         TEXT
       end
     end

@@ -44,18 +44,18 @@ module RubyMastery
           # 3. Add a singleton method to a specific instance of FinalApp.
 
           # TODO: Modify FinalApp here
-          # class FinalApp
-          #   prepend ...
-          # end
 
           # --- TEST SUITE ---
           app = FinalApp.new
           env = { trace: [] }
 
+          # Need to make sure the prepend is applied before calling
+          # (You might need to reopen the class or use an instance-level trick)
+
           result = app.call(env)
 
           raise "Middleware failure: Status not set" unless env[:status] == 200
-          raise "Middleware failure: Tracer not called" unless env[:trace].include?("FinalApp") # (Wait, TracerMiddleware adds its name)
+          raise "Middleware failure: Tracer not called" unless env[:trace].include?("FinalApp")
 
           # 4. Singleton Class Challenge
           # Add a method called 'version' ONLY to this specific 'app' instance
@@ -79,10 +79,28 @@ module RubyMastery
       def debrief
         super
         puts <<~TEXT
-          1. **Prepend vs Include**: `include` inserts a module *after* the class in the ancestor chain. `prepend` inserts it *before* the class, allowing the module to override class methods and call `super` to reach the original implementation.
-          2. **super vs super()**: *Effective Ruby Item 11* - `super` (no parens) passes ALL arguments to the parent method automatically. `super()` (with parens) passes NO arguments. Being explicit is often safer.
-          3. **Singleton Class (`class << self`)**: Every object in Ruby has a hidden "eigenclass". Modifying it allows you to define behavior that doesn't leak to other instances of the same class.
-          4. **Method Lookup**: Understanding the path (Prepend -> Class -> Include -> Superclass) is the key to debugging complex Ruby frameworks.
+          ### 1. `include` vs `prepend`
+          - `include`: Inserts the module **after** the class in the ancestor chain. If the class defines a method, it "wins" over the module.
+          - `prepend`: Inserts the module **before** the class. This allows the module to override the class's methods and then use `super` to call the original implementation. This is the foundation of "Aspect-Oriented Programming" in Ruby.
+
+          ### 2. `super` vs `super()`
+          *Effective Ruby Item 11* - `super` (no parentheses) automatically forwards all arguments from the current method to the parent. `super()` (with parentheses) forwards nothing.#{' '}
+          In a middleware chain, you usually want `super` to ensure the `env` hash (and any future arguments) flows through every layer correctly.
+
+          ### 3. The Singleton Class (Eigenclass)
+          Every object in Ruby has its own "Singleton Class" (or Eigenclass). When you define a method on a specific instance (`def app.version`), you are actually adding that method to its singleton class, not its regular class.#{' '}
+          *Expert Syntax:* `class << app; def version; "1.0.0"; end; end`.
+
+          ### 4. Method Lookup Chain
+          When you call a method, Ruby searches:#{' '}
+          1. Singleton Class
+          2. Prepended Modules (in reverse order of prepending)
+          3. The Class itself
+          4. Included Modules (in reverse order of inclusion)
+          5. Superclass -> Prepends -> Includes...
+          6. `Object` -> `Kernel` -> `BasicObject`
+          7. `method_missing`
+          Understanding this "Path of Power" is what separates Ruby juniors from seniors.
         TEXT
       end
     end
