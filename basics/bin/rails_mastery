@@ -3,7 +3,7 @@
 require 'tty-prompt'
 require 'colorize'
 require_relative '../lib/rails_mastery/rails_challenge'
-require_relative '../lib/rails_mastery/stats'
+require_relative '../lib/ruby_mastery/stats'
 require_relative '../lib/rails_mastery/challenges/composable_scopes'
 require_relative '../lib/rails_mastery/challenges/n_plus_one'
 require_relative '../lib/rails_mastery/challenges/batch_processing'

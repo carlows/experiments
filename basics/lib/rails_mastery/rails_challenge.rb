@@ -2,7 +2,7 @@ require 'active_record'
 require 'pg'
 require 'colorize'
 require 'fileutils'
-require_relative 'stats'
+require_relative '../ruby_mastery/stats'
 
 module RailsMastery
   class RailsChallenge
