@@ -76,37 +76,53 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 2. Dept Rank
-          res = Reporting.dept_ranking
-          charlie = res.find { |e| e.name == "Charlie" }
-          raise "Ex 2 Failed" unless charlie.rank.to_i == 1
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (Department Ranking)") do
+            res = Reporting.dept_ranking
+            charlie = res.find { |e| e.name == "Charlie" }
+            raise "Charlie rank mismatch" unless charlie&.rank.to_i == 1
+          end
 
           # 3. Dense Rank
-          # Frank and Heidi both have 85.
-          res = Reporting.dense_salary_ranking
-          frank = res.find { |e| e.name == "Frank" }
-          heidi = res.find { |e| e.name == "Heidi" }
-          raise "Ex 3 Failed: Ties should have same rank" unless frank.rank == heidi.rank
-          puts "✅ Ex 3 Passed"
+          verify_stage("Stage 3 (Dense Ranking)") do
+            res = Reporting.dense_salary_ranking
+            frank = res.find { |e| e.name == "Frank" }
+            heidi = res.find { |e| e.name == "Heidi" }
+            raise "Ties should have same rank" unless frank&.rank == heidi&.rank
+          end
 
           # 5. Top 2
-          res = Reporting.top_two_per_dept
-          eng_count = res.select { |e| e.department == "Eng" }.count
-          raise "Ex 5 Failed" unless eng_count == 2
-          puts "✅ Ex 5 Passed"
+          verify_stage("Stage 5 (Top 2 per Dept)") do
+            res = Reporting.top_two_per_dept
+            eng_count = res.select { |e| e.department == "Eng" }.count
+            raise "Eng count should be 2" unless eng_count == 2
+          end
 
           # 7. Lag
-          res = Reporting.previous_hire_salary
-          # Grace was 5y ago (70), Frank was 4y ago (85)
-          frank = res.find { |e| e.name == "Frank" }
-          raise "Ex 7 Failed" unless frank.prev_salary.to_i == 70
-          puts "✅ Ex 7 Passed"
+          verify_stage("Stage 7 (Previous Hire Salary)") do
+            res = Reporting.previous_hire_salary
+            frank = res.find { |e| e.name == "Frank" }
+            raise "Lag value mismatch" unless frank&.prev_salary.to_i == 70
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 4
+            puts "\n🏆 ALL STAGES COMPLETE! You are an Analytics Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

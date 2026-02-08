@@ -78,36 +78,55 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. Existence
-          res = JsonbMaster.has_ip
-          raise "Ex 1 Failed" unless res&.first&.name == "login"
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (Existence)") do
+            res = JsonbMaster.has_ip
+            raise "login event not found" unless res&.first&.name == "login"
+          end
 
           # 2. Containment
-          res = JsonbMaster.is_submit_click
-          raise "Ex 2 Failed" unless res&.first&.payload["button"] == "submit"
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (Containment)") do
+            res = JsonbMaster.is_submit_click
+            raise "submit click not found" unless res&.first&.payload["button"] == "submit"
+          end
 
           # 3. Array
-          res = JsonbMaster.is_admin_action
-          raise "Ex 3 Failed" unless res&.first&.payload.dig("user", "roles")&.include?("admin")
-          puts "✅ Ex 3 Passed"
+          verify_stage("Stage 3 (Array Inclusion)") do
+            res = JsonbMaster.is_admin_action
+            raise "admin role match failed" unless res&.first&.payload.dig("user", "roles")&.include?("admin")
+          end
 
           # 6. GIN Index
-          JsonbMaster.add_payload_index
-          raise "Ex 6 Failed" unless ActiveRecord::Base.connection.indexes(:events).any? { |i| i.using == :gin }
-          puts "✅ Ex 6 Passed"
+          verify_stage("Stage 6 (GIN Index)") do
+            JsonbMaster.add_payload_index
+            raise "Missing GIN index on events" unless ActiveRecord::Base.connection.indexes(:events).any? { |i| i.using == :gin }
+          end
 
           # 8. Merge
-          e = Event.first
-          JsonbMaster.set_dark_mode(e.id)
-          raise "Ex 8 Failed" unless e.reload.settings["theme"] == "dark"
-          puts "✅ Ex 8 Passed"
+          verify_stage("Stage 8 (JSONB Merge)") do
+            e = Event.first
+            JsonbMaster.set_dark_mode(e.id)
+            raise "Settings merge failed" unless e.reload.settings["theme"] == "dark"
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 5
+            puts "\n🏆 ALL STAGES COMPLETE! You are a JSONB Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

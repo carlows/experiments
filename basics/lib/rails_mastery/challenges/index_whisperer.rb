@@ -3,6 +3,14 @@ require_relative '../rails_challenge'
 module RailsMastery
   module Challenges
     class IndexWhisperer < RailsChallenge
+      class User < ActiveRecord::Base
+        has_many :orders
+      end
+
+      class Order < ActiveRecord::Base
+        belongs_to :user
+      end
+
       def initialize
         super('The Index Whisperer (10-Stage Performance)', '04_index_whisperer.rb')
       end
@@ -46,8 +54,13 @@ module RailsMastery
 
       def write_kata_file
         content = <<~RUBY
-          class User < ActiveRecord::Base; has_many :orders; end
-          class Order < ActiveRecord::Base; belongs_to :user; end
+          class User < ActiveRecord::Base#{' '}
+            has_many :orders#{' '}
+          end
+
+          class Order < ActiveRecord::Base
+            belongs_to :user#{' '}
+          end
 
           # --- YOUR MISSION ---
           # Optimize these 10 scenarios by adding the correct indexes.
@@ -103,36 +116,46 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
-          def check_index(table, columns, options = {})
-            # Helper to check if index exists
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
           end
 
           puts "Starting 10-Stage Verification..."
-          # We'll check the EXPLAIN for key stages
 
           # 1. Email
-          Optimizer.optimize_email_lookup
-          raise "Ex 1 Failed" unless ActiveRecord::Base.connection.index_exists?(:users, :email)
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (Simple Equality)") do
+            Optimizer.optimize_email_lookup
+            raise "Missing index on users.email" unless ActiveRecord::Base.connection.index_exists?(:users, :email)
+          end
 
           # 2. Composite
-          Optimizer.optimize_status_and_time
-          explain = ActiveRecord::Base.connection.execute("EXPLAIN SELECT * FROM orders WHERE status = 'pending' ORDER BY placed_at DESC").map(&:values).join
-          raise "Ex 2 Failed: Seq Scan or Sort detected" if explain.include?("Seq Scan") || explain.include?("Sort")
-          puts "✅ Ex 2 Passed"
-
-          # 3. Expression
-          Optimizer.optimize_lower_email
-          puts "✅ Ex 3 Passed (Manual check)"
+          verify_stage("Stage 2 (Composite Index)") do
+            Optimizer.optimize_status_and_time
+            explain = ActiveRecord::Base.connection.execute("EXPLAIN SELECT * FROM orders WHERE status = 'pending' ORDER BY placed_at DESC").map(&:values).join
+            raise "Seq Scan detected" if explain.include?("Seq Scan")
+            raise "Manual Sort detected (Index should provide order)" if explain.include?("Sort")
+          end
 
           # 4. Partial
-          Optimizer.optimize_active_recent_login
-          indexes = ActiveRecord::Base.connection.indexes(:users)
-          raise "Ex 4 Failed: No partial index" unless indexes.any? { |i| i.where.present? }
-          puts "✅ Ex 4 Passed"
+          verify_stage("Stage 4 (Partial Index)") do
+            Optimizer.optimize_active_recent_login
+            indexes = ActiveRecord::Base.connection.indexes(:users)
+            raise "No partial index found" unless indexes.any? { |i| i.where.present? }
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 3 # Allow passing with core stages
+            puts "\n🏆 ALL STAGES COMPLETE! You are an Indexing Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
+
         RUBY
         write_file(content)
       end

@@ -80,36 +80,62 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. find_each
-          LogProcessor.process_all
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (find_each)") do
+            Log.update_all(processed: false)
+            LogProcessor.process_all
+            raise "Not all logs processed" unless Log.where(processed: false).count == 0
+          end
 
           # 2. in_batches
-          Log.update_all(processed: false)
-          LogProcessor.bulk_mark_processed
-          raise "Ex 2 Failed" unless Log.where(processed: false).count == 0
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (in_batches)") do
+            Log.update_all(processed: false)
+            LogProcessor.bulk_mark_processed
+            raise "Batch mark failed" unless Log.where(processed: false).count == 0
+          end
 
-          # 5. Reverse
-          # Since find_each doesn't support order, we want to see how the user handles it.
-          # We'll check if the first processed is indeed one of the last IDs.
-          puts "✅ Ex 5 (Manual check required in real life, but we'll pass it for now)"
+          # 3. find_in_batches
+          verify_stage("Stage 3 (find_in_batches)") do
+            LogProcessor.small_batches
+            # Conceptual
+          end
+
+          # 4. Filtered
+          verify_stage("Stage 4 (Filtered Batching)") do
+            LogProcessor.process_critical
+          end
 
           # 8. Delete
-          Log.create!(created_at: 2.years.ago)
-          LogProcessor.bulk_delete_old
-          raise "Ex 8 Failed" if Log.where("created_at < ?", 1.year.ago).any?
-          puts "✅ Ex 8 Passed"
+          verify_stage("Stage 8 (Batch Deletion)") do
+            Log.create!(created_at: 2.years.ago)
+            LogProcessor.bulk_delete_old
+            raise "Old logs still exist" if Log.where("created_at < ?", 1.year.ago).any?
+          end
 
           # 9. Pluck
-          ids = LogProcessor.pluck_all_ids
-          raise "Ex 9 Failed" unless ids.is_a?(Array) && ids.size >= 5000
-          puts "✅ Ex 9 Passed"
+          verify_stage("Stage 9 (Plucking)") do
+            ids = LogProcessor.pluck_all_ids
+            raise "Expected Array of IDs" unless ids.is_a?(Array) && ids.size >= 5000
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 6 # Allowing some flexibility for conceptual ones
+            puts "\n🏆 ALL STAGES COMPLETE! You are a Batch Processing Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

@@ -79,34 +79,53 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. Bulk Insert
-          c = Inventory.count
-          Importer.bulk_add([
-            { sku: "B1", price: 10 }, { sku: "B2", price: 10 },#{' '}
-            { sku: "B3", price: 10 }, { sku: "B4", price: 10 }, { sku: "B5", price: 10 }
-          ])
-          raise "Ex 1 Failed" unless Inventory.count == c + 5
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (Bulk Insert)") do
+            c = Inventory.count
+            Importer.bulk_add([
+              { sku: "B1", price: 10 }, { sku: "B2", price: 10 },#{' '}
+              { sku: "B3", price: 10 }, { sku: "B4", price: 10 }, { sku: "B5", price: 10 }
+            ])
+            raise "Expected count to increase by 5" unless Inventory.count == c + 5
+          end
 
           # 2. Upsert
-          Importer.sync_stock([{ sku: "A1", quantity: 50 }, { sku: "C1", quantity: 5 }])
-          raise "Ex 2 Failed: A1 not updated" unless Inventory.find_by(sku: "A1").quantity == 50
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (Upsert Sync)") do
+            Importer.sync_stock([{ sku: "A1", quantity: 50 }, { sku: "C1", quantity: 5 }])
+            raise "A1 stock not updated" unless Inventory.find_by(sku: "A1").quantity == 50
+            raise "C1 not inserted" unless Inventory.exists?(sku: "C1")
+          end
 
           # 5. Safe Import
-          Importer.safe_import([{ sku: "A1", quantity: 999 }])
-          raise "Ex 5 Failed: A1 was updated but should have been ignored" if Inventory.find_by(sku: "A1").quantity == 999
-          puts "✅ Ex 5 Passed"
+          verify_stage("Stage 5 (On Conflict Do Nothing)") do
+            Importer.safe_import([{ sku: "A1", quantity: 999 }])
+            raise "A1 should have been ignored" if Inventory.find_by(sku: "A1").quantity == 999
+          end
 
           # 8. Returning IDs
-          ids = Importer.import_and_get_ids([{ sku: "D1", price: 5 }])
-          raise "Ex 8 Failed" unless ids.first.is_a?(Integer)
-          puts "✅ Ex 8 Passed"
+          verify_stage("Stage 8 (Returning IDs)") do
+            ids = Importer.import_and_get_ids([{ sku: "D1", price: 5 }])
+            raise "Expected Integer IDs in array" unless ids.first.is_a?(Integer)
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 4
+            puts "\n🏆 ALL STAGES COMPLETE! You are a Throughput Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

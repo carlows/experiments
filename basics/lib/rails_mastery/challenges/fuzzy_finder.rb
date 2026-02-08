@@ -86,31 +86,49 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. Similarity
-          res = MovieSearch.similar_to("Insept")
-          raise "Ex 1 Failed" unless res&.map(&:title)&.include?("Inception")
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (Trigram Similarity)") do
+            res = MovieSearch.similar_to("Insept")
+            raise "Inception not found" unless res&.map(&:title)&.include?("Inception")
+          end
 
           # 2. Index
-          MovieSearch.add_fuzzy_index
-          indexes = ActiveRecord::Base.connection.execute("SELECT indexdef FROM pg_indexes WHERE tablename = 'movies'").map(&:values).join
-          raise "Ex 2 Failed" unless indexes.include?("gist_trgm_ops")
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (Performance Index)") do
+            MovieSearch.add_fuzzy_index
+            indexes = ActiveRecord::Base.connection.execute("SELECT indexdef FROM pg_indexes WHERE tablename = 'movies'").map(&:values).join
+            raise "Missing gist_trgm_ops index" unless indexes.include?("gist_trgm_ops")
+          end
 
           # 5. Soundex
-          res = MovieSearch.sounds_like("Mamanto")
-          raise "Ex 5 Failed" unless res&.map(&:title)&.include?("Memento")
-          puts "✅ Ex 5 Passed"
+          verify_stage("Stage 5 (Phonetic Search)") do
+            res = MovieSearch.sounds_like("Mamanto")
+            raise "Memento not found via soundex" unless res&.map(&:title)&.include?("Memento")
+          end
 
           # 7. FTS
-          res = MovieSearch.fts_search("Dark")
-          raise "Ex 7 Failed" unless res&.map(&:title)&.include?("The Dark Knight")
-          puts "✅ Ex 7 Passed"
+          verify_stage("Stage 7 (Full Text Search)") do
+            res = MovieSearch.fts_search("Dark")
+            raise "Dark Knight not found via FTS" unless res&.map(&:title)&.include?("The Dark Knight")
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 4
+            puts "\n🏆 ALL STAGES COMPLETE! You are a Search Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

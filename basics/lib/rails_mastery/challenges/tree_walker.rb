@@ -75,29 +75,45 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. Depth
-          res = Hierarchy.with_depth
-          gc1 = res.find { |n| n.name == "GC1" }
-          raise "Ex 1 Failed" unless gc1.depth.to_i == 2
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (Recursive Depth)") do
+            res = Hierarchy.with_depth
+            gc1 = res.find { |n| n.name == "GC1" }
+            raise "GC1 depth mismatch" unless gc1&.depth.to_i == 2
+          end
 
           # 3. Sums
-          res = Hierarchy.subtree_totals
-          root = res.find { |n| n.name == "Root" }
-          # 100 + 50 + 30 + 10 + 20 = 210
-          raise "Ex 3 Failed: Expected 210, got \#{root.total_value}" unless root.total_value.to_i == 210
-          puts "✅ Ex 3 Passed"
+          verify_stage("Stage 3 (Subtree Sums)") do
+            res = Hierarchy.subtree_totals
+            root = res.find { |n| n.name == "Root" }
+            raise "Root subtree sum mismatch" unless root&.total_value.to_i == 210
+          end
 
           # 8. Count
-          res = Hierarchy.count_descendants
-          c1 = res.find { |n| n.name == "C1" }
-          raise "Ex 8 Failed: Expected 2 descendants for C1" unless c1.descendant_count.to_i == 2
-          puts "✅ Ex 8 Passed"
+          verify_stage("Stage 8 (Descendant Count)") do
+            res = Hierarchy.count_descendants
+            c1 = res.find { |n| n.name == "C1" }
+            raise "C1 descendant count mismatch" unless c1&.descendant_count.to_i == 2
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed >= 3
+            puts "\n🏆 ALL STAGES COMPLETE! You are a Recursion Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed} stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end

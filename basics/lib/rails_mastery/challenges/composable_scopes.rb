@@ -106,64 +106,92 @@ module RailsMastery
             end
           end
 
-          # --- TEST SUITE ---
+          # --- TEST SUITE (DO NOT MODIFY) ---
+          @stages_passed = 0
+          def verify_stage(name)
+            yield
+            puts "✅ \#{name} Passed"
+            @stages_passed += 1
+          rescue => e
+            puts "❌ \#{name} Failed: \#{e.message}"
+          end
+
           puts "Starting 10-Stage Verification..."
 
           # 1. OR
-          res = ProductSearch.affordable_or_available
-          raise "Ex 1 Failed: Expected affordable OR available" unless res&.count >= 3
-          puts "✅ Ex 1 Passed"
+          verify_stage("Stage 1 (OR Union)") do
+            res = ProductSearch.affordable_or_available
+            raise "Expected Relation" unless res.is_a?(ActiveRecord::Relation)
+            raise "Missing available products" unless res.map(&:name).include?("Laptop")
+            raise "Missing affordable products" unless res.map(&:name).include?("Old Book")
+          end
 
           # 2. Merge
-          res = ProductSearch.in_active_categories
-          raise "Ex 2 Failed: Should only be in active categories" if res&.any? { |p| !p.category.active }
-          puts "✅ Ex 2 Passed"
+          verify_stage("Stage 2 (Scope Merge)") do
+            res = ProductSearch.in_active_categories
+            raise "Inactive categories included" if res.any? { |p| !p.category.active }
+            raise "Electronics missing" unless res.map(&:name).include?("Laptop")
+          end
 
-          # 3. Inactive Merge
-          res = ProductSearch.in_inactive_categories
-          raise "Ex 3 Failed" if res&.any? { |p| p.category.active }
-          puts "✅ Ex 3 Passed"
+          # 3. Inactive
+          verify_stage("Stage 3 (Negative Merge)") do
+            res = ProductSearch.in_inactive_categories
+            raise "Active categories included" if res.any? { |p| p.category.active }
+            raise "Books missing" unless res.map(&:name).include?("Old Book")
+          end
 
           # 4. Unscope
-          rel = Product.available
-          res = ProductSearch.all_even_discontinued(rel)
-          raise "Ex 4 Failed" unless res&.count > rel.count
-          puts "✅ Ex 4 Passed"
+          verify_stage("Stage 4 (Unscope)") do
+            rel = Product.available
+            res = ProductSearch.all_even_discontinued(rel)
+            raise "Still scoped to available" unless res.count > rel.count
+          end
 
           # 5. Rewhere
-          rel = Product.where("price < 100")
-          res = ProductSearch.tighter_budget(rel)
-          raise "Ex 5 Failed" if res&.to_sql&.include?("100")
-          puts "✅ Ex 5 Passed"
+          verify_stage("Stage 5 (Rewhere)") do
+            rel = Product.where("price < 100")
+            res = ProductSearch.tighter_budget(rel)
+            raise "Filter not tightened" if res.to_sql.include?("100")
+          end
 
           # 6. Tag Join
-          Tag.create!(name: "tech", product: Product.first)
-          res = ProductSearch.with_tag("tech")
-          raise "Ex 6 Failed" unless res&.first == Product.first
-          puts "✅ Ex 6 Passed"
+          verify_stage("Stage 6 (Join Scoping)") do
+            Tag.create!(name: "tech", product: Product.first)
+            res = ProductSearch.with_tag("tech")
+            raise "Tag search failed" unless res.first == Product.first
+          end
 
           # 7. Multi-merge
-          res = ProductSearch.featured_and_active
-          raise "Ex 7 Failed" unless res&.count == 1
-          puts "✅ Ex 7 Passed"
+          verify_stage("Stage 7 (Multi-merge)") do
+            res = ProductSearch.featured_and_active
+            raise "Multi-merge mismatch" unless res.count == 1
+          end
 
           # 8. None
-          res = ProductSearch.abort_search
-          raise "Ex 8 Failed" unless res.is_a?(ActiveRecord::Relation) && res.empty?
-          puts "✅ Ex 8 Passed"
+          verify_stage("Stage 8 (Abort Search)") do
+            res = ProductSearch.abort_search
+            raise "Not a NullRelation" unless res.is_a?(ActiveRecord::Relation) && res.empty?
+          end
 
           # 9. Extending
-          res = ProductSearch.with_stats
-          raise "Ex 9 Failed" unless res.respond_to?(:total_price)
-          puts "✅ Ex 9 Passed"
+          verify_stage("Stage 9 (Relation Extensions)") do
+            res = ProductSearch.with_stats
+            raise "Extension missing" unless res.respond_to?(:total_price)
+          end
 
           # 10. Reorder
-          rel = Product.order(name: :desc)
-          res = ProductSearch.cheapest_first(rel)
-          raise "Ex 10 Failed" if res.to_sql.downcase.include?("order by \\"products\\".\\"name\\" desc")
-          puts "✅ Ex 10 Passed"
+          verify_stage("Stage 10 (Reorder)") do
+            rel = Product.order(name: :desc)
+            res = ProductSearch.cheapest_first(rel)
+            raise "Not reordered" if res.to_sql.downcase.include?("name desc")
+          end
 
-          puts "🏆 ALL STAGES COMPLETE!"
+          if @stages_passed == 10
+            puts "\n🏆 ALL STAGES COMPLETE! You are a Scope Master."
+          else
+            puts "\n❌ You passed \#{@stages_passed}/10 stages. Keep going!"
+            exit 1
+          end
         RUBY
         write_file(content)
       end
